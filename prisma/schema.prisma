@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(cuid())
+  name            String
+  email           String          @unique
+  password        String
+  role            String          @default("staff")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  dailyRecords    DailyRecord[]
+  medications     Medication[]
+  medicationLogs  MedicationLog[]
+}
+
+model Animal {
+  id             String         @id @default(cuid())
+  name           String
+  species        String
+  breed          String?
+  birthDate      DateTime?
+  sex            String
+  intakeDate     DateTime
+  conditions     String?
+  breederName    String?
+  transferDate   DateTime?
+  transferTo     String?
+  deathDate      DateTime?
+  deathCause     String?
+  notes          String?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  dailyRecords   DailyRecord[]
+  medications    Medication[]
+  vaccines       Vaccine[]
+  weightRecords  WeightRecord[]
+}
+
+model DailyRecord {
+  id             String   @id @default(cuid())
+  animalId       String
+  animal         Animal   @relation(fields: [animalId], references: [id])
+  recordDate     DateTime
+  timeOfDay      String?
+  staffId        String
+  staff          User     @relation(fields: [staffId], references: [id])
+  energyLevel    Int?
+  appetite       String?
+  foodAmount     String?
+  urineAmount    String?
+  stoolCondition String?
+  stoolPhotoUrl  String?
+  brushing       Boolean  @default(false)
+  nailTrimming   Boolean  @default(false)
+  trimming       Boolean  @default(false)
+  shampoo        Boolean  @default(false)
+  inHeat         Boolean  @default(false)
+  injury         String?
+  injuryPhotoUrl String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Medication {
+  id              String           @id @default(cuid())
+  animalId        String
+  animal          Animal           @relation(fields: [animalId], references: [id])
+  staffId         String
+  staff           User             @relation(fields: [staffId], references: [id])
+  medicineName    String
+  dosage          String?
+  frequency       String?
+  startDate       DateTime
+  endDate         DateTime?
+  administeredAt  DateTime?
+  remainingDoses  Int?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  logs            MedicationLog[]
+}
+
+model MedicationLog {
+  id           String     @id @default(cuid())
+  medicationId String
+  medication   Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  logDate      DateTime
+  timeOfDay    String
+  staffId      String?
+  staff        User?      @relation(fields: [staffId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([medicationId, logDate, timeOfDay])
+}
+
+model Vaccine {
+  id           String    @id @default(cuid())
+  animalId     String
+  animal       Animal    @relation(fields: [animalId], references: [id])
+  vaccineName  String
+  vaccinatedAt DateTime
+  nextDueDate  DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+}
+
+model WeightRecord {
+  id         String   @id @default(cuid())
+  animalId   String
+  animal     Animal   @relation(fields: [animalId], references: [id])
+  weight     Float
+  recordedAt DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+}
