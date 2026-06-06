@@ -34,7 +34,7 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
     <form action={action} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
       <Section title="基本情報">
         <Field label="名前 *" name="name" required defaultValue={animal?.name} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">種類 *</label>
             <select
@@ -52,7 +52,7 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
           </div>
           <Field label="品種" name="breed" defaultValue={animal?.breed ?? ""} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">性別 *</label>
             <select
@@ -68,7 +68,7 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
           </div>
           <Field label="生年月日" name="birthDate" type="date" defaultValue={fmtDate(animal?.birthDate)} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="受け入れ日 *" name="intakeDate" type="date" required defaultValue={fmtDate(animal?.intakeDate)} />
           <Field label="繁殖者・譲渡元氏名" name="breederName" defaultValue={animal?.breederName ?? ""} />
         </div>
@@ -76,14 +76,14 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
       </Section>
 
       <Section title="譲渡情報">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="譲渡日（新しい飼い主）" name="transferDate" type="date" defaultValue={fmtDate(animal?.transferDate)} />
           <Field label="譲渡先氏名" name="transferTo" defaultValue={animal?.transferTo ?? ""} />
         </div>
       </Section>
 
       <Section title="死亡情報">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="死亡日" name="deathDate" type="date" defaultValue={fmtDate(animal?.deathDate)} />
           <Field label="死亡原因" name="deathCause" defaultValue={animal?.deathCause ?? ""} />
         </div>

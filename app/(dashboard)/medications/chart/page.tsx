@@ -130,7 +130,7 @@ export default async function MedicationChartPage() {
                   times.map((t) => (
                     <th
                       key={`${d.toISOString()}_${t}`}
-                      className={`px-2 py-1 text-center text-xs font-medium border-b border-r w-12 ${
+                      className={`px-2 py-1 text-center text-xs font-medium border-b border-r w-16 ${
                         t === "AM" ? "text-orange-400" : "text-indigo-400"
                       }`}
                     >
@@ -185,15 +185,15 @@ export default async function MedicationChartPage() {
                                       ? `${logInfo.staffName ?? "不明"}が投与 — 取り消す`
                                       : "投与済みにする"
                                   }
-                                  className={`w-8 h-8 rounded-full border-2 flex flex-col items-center justify-center mx-auto transition-colors cursor-pointer ${
+                                  className={`w-11 h-11 rounded-full border-2 flex flex-col items-center justify-center mx-auto transition-colors cursor-pointer ${
                                     given
                                       ? "bg-green-500 border-green-500 text-white hover:bg-red-400 hover:border-red-400"
                                       : "border-gray-300 text-gray-300 hover:border-green-400 hover:text-green-400"
                                   }`}
                                 >
-                                  <span className="text-xs font-bold leading-none">{given ? "✓" : ""}</span>
+                                  <span className="text-sm font-bold leading-none">{given ? "✓" : ""}</span>
                                   {given && logInfo.staffName && (
-                                    <span className="text-[8px] leading-none mt-0.5 truncate max-w-[28px]">
+                                    <span className="text-[9px] leading-none mt-0.5 truncate max-w-[36px]">
                                       {logInfo.staffName.slice(0, 3)}
                                     </span>
                                   )}

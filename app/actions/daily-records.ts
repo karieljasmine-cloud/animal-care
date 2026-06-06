@@ -108,3 +108,56 @@ export async function updateDailyRecord(id: string, formData: FormData) {
   revalidatePath("/daily-records");
   redirect(`/daily-records?animalId=${existing.animalId}`);
 }
+
+const STOOL_CYCLE: (string | null)[] = [null, "良好", "軟便", "下痢"];
+const URINE_CYCLE: (string | null)[] = [null, "普通", "少ない", "なし"];
+
+export async function quickUpdateExcretion(
+  animalId: string,
+  dateStr: string,
+  timeOfDay: string,
+  field: "stool" | "urine",
+  currentValue: string | null
+): Promise<{ stoolCondition: string | null; urineAmount: string | null; recordId: string }> {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const cycle = field === "stool" ? STOOL_CYCLE : URINE_CYCLE;
+  const currentIdx = cycle.indexOf(currentValue);
+  const nextValue = cycle[(currentIdx + 1) % cycle.length];
+
+  const recordDate = new Date(dateStr);
+
+  const existing = await prisma.dailyRecord.findFirst({
+    where: { animalId, recordDate, timeOfDay },
+  });
+
+  if (existing) {
+    const updated = await prisma.dailyRecord.update({
+      where: { id: existing.id },
+      data: field === "stool" ? { stoolCondition: nextValue } : { urineAmount: nextValue },
+      select: { id: true, stoolCondition: true, urineAmount: true },
+    });
+    revalidatePath("/daily-records/chart");
+    return { stoolCondition: updated.stoolCondition, urineAmount: updated.urineAmount, recordId: updated.id };
+  } else {
+    const created = await prisma.dailyRecord.create({
+      data: {
+        animalId,
+        recordDate,
+        timeOfDay,
+        staffId: (session.user as { id?: string }).id!,
+        stoolCondition: field === "stool" ? nextValue : null,
+        urineAmount: field === "urine" ? nextValue : null,
+        brushing: false,
+        nailTrimming: false,
+        trimming: false,
+        shampoo: false,
+        inHeat: false,
+      },
+      select: { id: true, stoolCondition: true, urineAmount: true },
+    });
+    revalidatePath("/daily-records/chart");
+    return { stoolCondition: created.stoolCondition, urineAmount: created.urineAmount, recordId: created.id };
+  }
+}

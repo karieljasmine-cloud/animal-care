@@ -48,7 +48,7 @@ export default function DailyRecordForm({
   return (
     <form action={action} encType="multipart/form-data" className="bg-white rounded-xl shadow-sm p-6 space-y-6">
       {/* 基本 */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">個体 *</label>
           <select
@@ -87,8 +87,8 @@ export default function DailyRecordForm({
               defaultValue={record?.timeOfDay ?? defaultTimeOfDay ?? "AM"}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="AM">☀ 朝（AM）</option>
-              <option value="PM">★ 夜（PM）</option>
+              <option value="AM">☀ 朝</option>
+              <option value="PM">★ 夜</option>
             </select>
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function DailyRecordForm({
 
       {/* 健康状態 */}
       <Section title="健康状態">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">元気の良さ</label>
             <select
@@ -132,7 +132,7 @@ export default function DailyRecordForm({
               type="text"
               name="foodAmount"
               defaultValue={record?.foodAmount ?? ""}
-              placeholder="例: 100g, 完食"
+              placeholder="例: 完食"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
@@ -141,7 +141,7 @@ export default function DailyRecordForm({
 
       {/* 排泄 */}
       <Section title="排泄">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">尿の量</label>
             <select
@@ -171,28 +171,28 @@ export default function DailyRecordForm({
               <option value="なし">なし</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">便の写真</label>
-            <input
-              type="file"
-              name="stoolPhoto"
-              accept="image/*"
-              className="w-full text-sm text-gray-500"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) setStoolPreview(URL.createObjectURL(file));
-              }}
-            />
-            {stoolPreview && (
-              <img src={stoolPreview} alt="便の写真" className="mt-1 h-16 rounded object-cover" />
-            )}
-          </div>
+        </div>
+        <div className="mt-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">便の写真</label>
+          <input
+            type="file"
+            name="stoolPhoto"
+            accept="image/*"
+            className="w-full text-sm text-gray-500"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) setStoolPreview(URL.createObjectURL(file));
+            }}
+          />
+          {stoolPreview && (
+            <img src={stoolPreview} alt="便の写真" className="mt-1 h-16 rounded object-cover" />
+          )}
         </div>
       </Section>
 
       {/* ケア */}
       <Section title="ケア">
-        <div className="flex flex-wrap gap-6">
+        <div className="flex flex-wrap gap-5">
           {[
             { name: "brushing", label: "毛ブラシ", checked: record?.brushing },
             { name: "nailTrimming", label: "爪切り", checked: record?.nailTrimming },
@@ -205,7 +205,7 @@ export default function DailyRecordForm({
                 type="checkbox"
                 name={item.name}
                 defaultChecked={item.checked ?? false}
-                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
               />
               <span className="text-sm text-gray-700">{item.label}</span>
             </label>
