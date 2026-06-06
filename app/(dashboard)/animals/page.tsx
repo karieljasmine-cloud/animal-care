@@ -22,9 +22,9 @@ export default async function AnimalsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold text-gray-800">個体台帳</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {canEdit && (
             <a
               href="/api/animals/export"
