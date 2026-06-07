@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -65,6 +65,7 @@ export async function createDailyRecord(formData: FormData) {
     },
   });
 
+  updateTag("daily-records");
   revalidatePath("/daily-records");
   revalidatePath(`/animals/${animalId}`);
   redirect(`/daily-records?animalId=${animalId}`);
@@ -105,6 +106,7 @@ export async function updateDailyRecord(id: string, formData: FormData) {
     },
   });
 
+  updateTag("daily-records");
   revalidatePath("/daily-records");
   redirect(`/daily-records?animalId=${existing.animalId}`);
 }
@@ -138,6 +140,7 @@ export async function quickUpdateExcretion(
       data: field === "stool" ? { stoolCondition: nextValue } : { urineAmount: nextValue },
       select: { id: true, stoolCondition: true, urineAmount: true },
     });
+    updateTag("daily-records");
     revalidatePath("/daily-records/chart");
     return { stoolCondition: updated.stoolCondition, urineAmount: updated.urineAmount, recordId: updated.id };
   } else {
@@ -157,6 +160,7 @@ export async function quickUpdateExcretion(
       },
       select: { id: true, stoolCondition: true, urineAmount: true },
     });
+    updateTag("daily-records");
     revalidatePath("/daily-records/chart");
     return { stoolCondition: created.stoolCondition, urineAmount: created.urineAmount, recordId: created.id };
   }

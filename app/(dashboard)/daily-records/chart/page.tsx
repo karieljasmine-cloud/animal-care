@@ -2,30 +2,34 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { format, subDays, startOfDay } from "date-fns";
 import ExcretionChartClient from "@/components/ExcretionChartClient";
+import { unstable_cache } from "next/cache";
 
 const DAYS = 7;
 
+const getChartData = unstable_cache(
+  async () => {
+    const today = startOfDay(new Date());
+    const from = subDays(today, DAYS - 1);
+    const [animals, records] = await Promise.all([
+      prisma.animal.findMany({
+        where: { isActive: true },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.dailyRecord.findMany({
+        where: { recordDate: { gte: from } },
+        select: { id: true, animalId: true, recordDate: true, stoolCondition: true, urineAmount: true, timeOfDay: true },
+      }),
+    ]);
+    return { animals, records };
+  },
+  ["excretion-chart"],
+  { revalidate: 30, tags: ["daily-records", "animals"] }
+);
+
 export default async function StoolChartPage() {
   const today = startOfDay(new Date());
-  const from = subDays(today, DAYS - 1);
-
-  const animals = await prisma.animal.findMany({
-    where: { isActive: true },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
-
-  const records = await prisma.dailyRecord.findMany({
-    where: { recordDate: { gte: from } },
-    select: {
-      id: true,
-      animalId: true,
-      recordDate: true,
-      stoolCondition: true,
-      urineAmount: true,
-      timeOfDay: true,
-    },
-  });
+  const { animals, records } = await getChartData();
 
   const dates = Array.from({ length: DAYS }, (_, i) => subDays(today, DAYS - 1 - i));
 

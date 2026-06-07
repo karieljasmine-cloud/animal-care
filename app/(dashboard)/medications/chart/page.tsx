@@ -3,37 +3,41 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { format, subDays, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag, unstable_cache } from "next/cache";
 
 const DAYS = 7;
 
-export default async function MedicationChartPage() {
-  const session = await auth();
-  const staffId = (session?.user as { id?: string })?.id;
+function getMedicationChartData(fromDateStr: string) {
+  return unstable_cache(
+    async () => {
+      const from = new Date(fromDateStr);
+      const now = new Date();
+      return prisma.medication.findMany({
+        where: {
+          animal: { isActive: true },
+          OR: [{ endDate: null }, { endDate: { gte: now } }],
+        },
+        orderBy: [{ animal: { name: "asc" } }, { medicineName: "asc" }],
+        include: {
+          animal: { select: { id: true, name: true } },
+          logs: {
+            where: { logDate: { gte: from } },
+            select: { id: true, logDate: true, timeOfDay: true, staff: { select: { name: true } } },
+          },
+        },
+      });
+    },
+    ["medication-chart", fromDateStr],
+    { revalidate: 30, tags: ["medications"] }
+  )();
+}
 
+export default async function MedicationChartPage() {
   const today = startOfDay(new Date());
   const dates = Array.from({ length: DAYS }, (_, i) => subDays(today, DAYS - 1 - i));
   const from = dates[0];
 
-  const medications = await prisma.medication.findMany({
-    where: {
-      animal: { isActive: true },
-      OR: [{ endDate: null }, { endDate: { gte: today } }],
-    },
-    orderBy: [{ animal: { name: "asc" } }, { medicineName: "asc" }],
-    include: {
-      animal: { select: { id: true, name: true } },
-      logs: {
-        where: { logDate: { gte: from } },
-        select: {
-          id: true,
-          logDate: true,
-          timeOfDay: true,
-          staff: { select: { name: true } },
-        },
-      },
-    },
-  });
+  const medications = await getMedicationChartData(format(from, "yyyy-MM-dd"));
 
   async function toggleLog(formData: FormData) {
     "use server";
@@ -59,6 +63,7 @@ export default async function MedicationChartPage() {
         data: { remainingDoses: { decrement: 1 } },
       });
     }
+    updateTag("medications");
     revalidatePath("/medications/chart");
   }
 

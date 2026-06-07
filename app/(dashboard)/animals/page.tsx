@@ -4,6 +4,17 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { unstable_cache } from "next/cache";
+
+const getAnimals = unstable_cache(
+  () =>
+    prisma.animal.findMany({
+      orderBy: [{ isActive: "desc" }, { name: "asc" }],
+      include: { _count: { select: { dailyRecords: true } } },
+    }),
+  ["animals-list"],
+  { revalidate: 60, tags: ["animals"] }
+);
 
 export default async function AnimalsPage() {
   const session = await auth();
@@ -12,10 +23,7 @@ export default async function AnimalsPage() {
 
   const canEdit = role === "admin";
 
-  const animals = await prisma.animal.findMany({
-    orderBy: [{ isActive: "desc" }, { name: "asc" }],
-    include: { _count: { select: { dailyRecords: true } } },
-  });
+  const animals = await getAnimals();
 
   const active = animals.filter((a) => a.isActive);
   const inactive = animals.filter((a) => !a.isActive);

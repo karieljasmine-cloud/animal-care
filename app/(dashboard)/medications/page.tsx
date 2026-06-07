@@ -2,15 +2,23 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { unstable_cache } from "next/cache";
+
+const getMedications = unstable_cache(
+  () =>
+    prisma.medication.findMany({
+      orderBy: { startDate: "desc" },
+      include: {
+        animal: { select: { id: true, name: true } },
+        staff: { select: { name: true } },
+      },
+    }),
+  ["medications-list"],
+  { revalidate: 60, tags: ["medications"] }
+);
 
 export default async function MedicationsPage() {
-  const medications = await prisma.medication.findMany({
-    orderBy: { startDate: "desc" },
-    include: {
-      animal: { select: { id: true, name: true } },
-      staff: { select: { name: true } },
-    },
-  });
+  const medications = await getMedications();
 
   const active = medications.filter((m) => !m.endDate || new Date(m.endDate) >= new Date());
   const past = medications.filter((m) => m.endDate && new Date(m.endDate) < new Date());

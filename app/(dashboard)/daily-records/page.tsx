@@ -3,6 +3,35 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import AnimalFilterSelect from "@/components/AnimalFilterSelect";
+import { unstable_cache } from "next/cache";
+
+const getActiveAnimals = unstable_cache(
+  () =>
+    prisma.animal.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ["active-animals"],
+  { revalidate: 60, tags: ["animals"] }
+);
+
+function getDailyRecords(animalId?: string) {
+  return unstable_cache(
+    () =>
+      prisma.dailyRecord.findMany({
+        where: animalId ? { animalId } : undefined,
+        orderBy: { recordDate: "desc" },
+        take: 50,
+        include: {
+          animal: { select: { id: true, name: true } },
+          staff: { select: { name: true } },
+        },
+      }),
+    ["daily-records", animalId ?? "all"],
+    { revalidate: 30, tags: ["daily-records"] }
+  )();
+}
 
 export default async function DailyRecordsPage({
   searchParams,
@@ -11,21 +40,10 @@ export default async function DailyRecordsPage({
 }) {
   const { animalId } = await searchParams;
 
-  const records = await prisma.dailyRecord.findMany({
-    where: animalId ? { animalId } : undefined,
-    orderBy: { recordDate: "desc" },
-    take: 50,
-    include: {
-      animal: { select: { id: true, name: true } },
-      staff: { select: { name: true } },
-    },
-  });
-
-  const animals = await prisma.animal.findMany({
-    where: { isActive: true },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const [records, animals] = await Promise.all([
+    getDailyRecords(animalId),
+    getActiveAnimals(),
+  ]);
 
   const selectedAnimal = animals.find((a) => a.id === animalId);
 
