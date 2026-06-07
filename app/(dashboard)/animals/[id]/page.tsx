@@ -4,6 +4,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import DeleteAnimalButton from "@/components/DeleteAnimalButton";
+import RetireAnimalButton from "@/components/RetireAnimalButton";
+import ReactivateAnimalButton from "@/components/ReactivateAnimalButton";
 
 import { auth } from "@/lib/auth";
 
@@ -54,13 +56,18 @@ export default async function AnimalDetailPage(props: { params: Promise<{ id: st
           </h1>
         </div>
         {canEdit && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href={`/animals/${id}/edit`}
               className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"
             >
               編集
             </Link>
+            {animal.isActive ? (
+              <RetireAnimalButton id={id} name={animal.name} />
+            ) : (
+              <ReactivateAnimalButton id={id} name={animal.name} />
+            )}
             <DeleteAnimalButton id={id} name={animal.name} />
           </div>
         )}

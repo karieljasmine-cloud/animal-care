@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 function parseDate(val: FormDataEntryValue | null) {
@@ -74,6 +74,51 @@ export async function deleteAnimal(id: string) {
   if (!session?.user) throw new Error("Unauthorized");
 
   await prisma.animal.delete({ where: { id } });
+  updateTag("animals");
   revalidatePath("/animals");
   redirect("/animals");
+}
+
+export async function deactivateAnimal(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const id = formData.get("animalId") as string;
+  const reason = formData.get("reason") as string;
+  const dateVal = formData.get("date") as string;
+  const date = dateVal ? new Date(dateVal) : new Date();
+  const details = (formData.get("details") as string) || null;
+
+  await prisma.animal.update({
+    where: { id },
+    data: {
+      isActive: false,
+      ...(reason === "transfer" && { transferDate: date, transferTo: details }),
+      ...(reason === "death" && { deathDate: date, deathCause: details }),
+    },
+  });
+
+  updateTag("animals");
+  revalidatePath("/animals");
+  revalidatePath(`/animals/${id}`);
+}
+
+export async function reactivateAnimal(id: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  await prisma.animal.update({
+    where: { id },
+    data: {
+      isActive: true,
+      transferDate: null,
+      transferTo: null,
+      deathDate: null,
+      deathCause: null,
+    },
+  });
+
+  updateTag("animals");
+  revalidatePath("/animals");
+  revalidatePath(`/animals/${id}`);
 }
