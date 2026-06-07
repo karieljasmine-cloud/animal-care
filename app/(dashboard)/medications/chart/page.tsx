@@ -111,10 +111,10 @@ export default async function MedicationChartPage() {
           <table className="text-sm border-collapse min-w-max">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 bg-green-50 px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[100px]">
+                <th className="sticky left-0 z-10 bg-green-50 px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[72px] sm:min-w-[100px]">
                   個体
                 </th>
-                <th className="sticky left-[100px] z-10 bg-green-50 px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[180px]">
+                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[140px] sm:min-w-[180px]">
                   薬品名 / 用量・頻度
                 </th>
                 {dates.map((d) => (
@@ -129,13 +129,13 @@ export default async function MedicationChartPage() {
                 ))}
               </tr>
               <tr>
-                <th className="sticky left-0 z-10 bg-green-50 border-b border-r"></th>
-                <th className="sticky left-[100px] z-10 bg-green-50 border-b border-r"></th>
+                <th className="sticky left-0 z-10 bg-green-50 border-b border-r min-w-[72px] sm:min-w-[100px]"></th>
+                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 border-b border-r min-w-[140px] sm:min-w-[180px]"></th>
                 {dates.map((d) =>
                   times.map((t) => (
                     <th
                       key={`${d.toISOString()}_${t}`}
-                      className={`px-2 py-1 text-center text-xs font-medium border-b border-r w-16 ${
+                      className={`px-1 py-1 text-center text-xs font-medium border-b border-r w-14 sm:w-16 ${
                         t === "AM" ? "text-orange-400" : "text-indigo-400"
                       }`}
                     >
@@ -150,11 +150,11 @@ export default async function MedicationChartPage() {
                 const isLow = med.remainingDoses !== null && med.remainingDoses <= 3;
                 return (
                   <tr key={med.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
-                    <td className="sticky left-0 z-10 bg-inherit px-4 py-2 font-medium text-gray-800 border-b border-r">
+                    <td className="sticky left-0 z-10 bg-inherit px-2 sm:px-4 py-2 font-medium text-gray-800 border-b border-r text-xs sm:text-sm">
                       {med.animal.name}
                     </td>
-                    <td className="sticky left-[100px] z-10 bg-inherit px-4 py-2 border-b border-r">
-                      <div className="font-medium text-gray-800">{med.medicineName}</div>
+                    <td className="sticky left-[72px] sm:left-[100px] z-10 bg-inherit px-2 sm:px-4 py-2 border-b border-r">
+                      <div className="font-medium text-gray-800 text-xs sm:text-sm">{med.medicineName}</div>
                       {(med.dosage || med.frequency) && (
                         <div className="text-xs text-gray-400">
                           {[med.dosage, med.frequency].filter(Boolean).join(" · ")}
@@ -174,9 +174,9 @@ export default async function MedicationChartPage() {
                         const given = !!logInfo;
                         const isFuture = d > today;
                         return (
-                          <td key={key} className="px-1 py-2 text-center border-b border-r">
+                          <td key={key} className="px-0.5 py-1.5 text-center border-b border-r">
                             {isFuture ? (
-                              <span className="w-8 h-8 flex items-center justify-center mx-auto text-gray-200 text-xs">—</span>
+                              <span className="w-10 h-10 flex items-center justify-center mx-auto text-gray-200 text-xs">—</span>
                             ) : (
                               <form action={toggleLog}>
                                 <input type="hidden" name="medicationId" value={med.id} />
@@ -190,7 +190,7 @@ export default async function MedicationChartPage() {
                                       ? `${logInfo.staffName ?? "不明"}が投与 — 取り消す`
                                       : "投与済みにする"
                                   }
-                                  className={`w-11 h-11 rounded-full border-2 flex flex-col items-center justify-center mx-auto transition-colors cursor-pointer ${
+                                  className={`w-12 h-12 rounded-full border-2 flex flex-col items-center justify-center mx-auto transition-colors cursor-pointer ${
                                     given
                                       ? "bg-green-500 border-green-500 text-white hover:bg-red-400 hover:border-red-400"
                                       : "border-gray-300 text-gray-300 hover:border-green-400 hover:text-green-400"

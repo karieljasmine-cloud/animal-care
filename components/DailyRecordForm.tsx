@@ -48,7 +48,7 @@ export default function DailyRecordForm({
   return (
     <form action={action} encType="multipart/form-data" className="bg-white rounded-xl shadow-sm p-6 space-y-6">
       {/* 基本 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">個体 *</label>
           <select
@@ -65,7 +65,7 @@ export default function DailyRecordForm({
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">記録日 *</label>
             <input

@@ -98,61 +98,95 @@ function AnimalTable({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className={inactive ? "bg-gray-100" : "bg-green-50"}>
-          <tr>
-            <th className="text-left px-4 py-3 font-medium text-gray-600">名前</th>
-            <th className="text-left px-4 py-3 font-medium text-gray-600">種類/品種</th>
-            <th className="text-left px-4 py-3 font-medium text-gray-600">性別</th>
-            <th className="text-left px-4 py-3 font-medium text-gray-600">生年月日</th>
-            <th className="text-left px-4 py-3 font-medium text-gray-600">受け入れ日</th>
-            <th className="text-left px-4 py-3 font-medium text-gray-600">持病</th>
-            <th className="text-left px-4 py-3 font-medium text-gray-600">記録数</th>
-            <th className="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {animals.map((animal, i) => (
-            <tr
-              key={animal.id}
-              className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-green-50 transition-colors`}
-            >
-              <td className="px-4 py-3 font-medium text-gray-800">
+    <>
+      {/* モバイル: カードレイアウト */}
+      <div className="md:hidden space-y-2">
+        {animals.map((animal) => (
+          <Link
+            key={animal.id}
+            href={`/animals/${animal.id}`}
+            className={`block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow ${inactive ? "opacity-60" : ""}`}
+          >
+            <div className="flex justify-between items-center">
+              <div className="font-semibold text-gray-800">
                 {animal.name}
                 {animal.deathDate && <span className="ml-1 text-gray-400 text-xs">†</span>}
                 {animal.transferDate && <span className="ml-1 text-blue-400 text-xs">→</span>}
-              </td>
-              <td className="px-4 py-3 text-gray-600">
-                {animal.species}
-                {animal.breed && <span className="text-gray-400"> / {animal.breed}</span>}
-              </td>
-              <td className="px-4 py-3 text-gray-600">
-                {animal.sex === "male" ? "♂ オス" : "♀ メス"}
-              </td>
-              <td className="px-4 py-3 text-gray-600">
-                {animal.birthDate
-                  ? format(new Date(animal.birthDate), "yyyy/MM/dd", { locale: ja })
-                  : "-"}
-              </td>
-              <td className="px-4 py-3 text-gray-600">
-                {format(new Date(animal.intakeDate), "yyyy/MM/dd", { locale: ja })}
-              </td>
-              <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
-                {animal.conditions || "-"}
-              </td>
-              <td className="px-4 py-3 text-gray-500 text-center">
-                {animal._count.dailyRecords}
-              </td>
-              <td className="px-4 py-3">
-                <Link href={`/animals/${animal.id}`} className="text-green-600 hover:text-green-800 font-medium">
-                  詳細
-                </Link>
-              </td>
+              </div>
+              <span className="text-green-500 text-xl font-light">›</span>
+            </div>
+            <div className="text-sm text-gray-500 mt-0.5">
+              {animal.species}{animal.breed && <span className="text-gray-400"> / {animal.breed}</span>}
+              {" · "}{animal.sex === "male" ? "♂ オス" : "♀ メス"}
+            </div>
+            <div className="text-xs text-gray-400 mt-1.5 flex flex-wrap gap-3">
+              <span>受入: {format(new Date(animal.intakeDate), "yyyy/MM/dd", { locale: ja })}</span>
+              <span>記録 {animal._count.dailyRecords}件</span>
+            </div>
+            {animal.conditions && (
+              <div className="text-xs text-orange-600 mt-1">持病: {animal.conditions}</div>
+            )}
+          </Link>
+        ))}
+      </div>
+
+      {/* デスクトップ: テーブルレイアウト */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className={inactive ? "bg-gray-100" : "bg-green-50"}>
+            <tr>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">名前</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">種類/品種</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">性別</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">生年月日</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">受け入れ日</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">持病</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">記録数</th>
+              <th className="px-4 py-3"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {animals.map((animal, i) => (
+              <tr
+                key={animal.id}
+                className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-green-50 transition-colors`}
+              >
+                <td className="px-4 py-3 font-medium text-gray-800">
+                  {animal.name}
+                  {animal.deathDate && <span className="ml-1 text-gray-400 text-xs">†</span>}
+                  {animal.transferDate && <span className="ml-1 text-blue-400 text-xs">→</span>}
+                </td>
+                <td className="px-4 py-3 text-gray-600">
+                  {animal.species}
+                  {animal.breed && <span className="text-gray-400"> / {animal.breed}</span>}
+                </td>
+                <td className="px-4 py-3 text-gray-600">
+                  {animal.sex === "male" ? "♂ オス" : "♀ メス"}
+                </td>
+                <td className="px-4 py-3 text-gray-600">
+                  {animal.birthDate
+                    ? format(new Date(animal.birthDate), "yyyy/MM/dd", { locale: ja })
+                    : "-"}
+                </td>
+                <td className="px-4 py-3 text-gray-600">
+                  {format(new Date(animal.intakeDate), "yyyy/MM/dd", { locale: ja })}
+                </td>
+                <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
+                  {animal.conditions || "-"}
+                </td>
+                <td className="px-4 py-3 text-gray-500 text-center">
+                  {animal._count.dailyRecords}
+                </td>
+                <td className="px-4 py-3">
+                  <Link href={`/animals/${animal.id}`} className="text-green-600 hover:text-green-800 font-medium">
+                    詳細
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
