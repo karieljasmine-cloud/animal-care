@@ -38,7 +38,40 @@ export default async function StaffPage() {
       <h1 className="text-2xl font-bold text-gray-800">スタッフ管理</h1>
 
       {/* スタッフ一覧 */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+
+      {/* モバイル: カードレイアウト */}
+      <div className="md:hidden space-y-2">
+        {staff.map((s) => {
+          const roleLabel = s.role === "admin" ? "管理者" : s.role === "viewer" ? "閲覧者" : "スタッフ";
+          const roleClass = s.role === "admin"
+            ? "bg-purple-100 text-purple-700"
+            : s.role === "viewer"
+            ? "bg-blue-100 text-blue-700"
+            : "bg-green-100 text-green-700";
+          return (
+            <div key={s.id} className="bg-white rounded-xl shadow-sm p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="font-semibold text-gray-800">{s.name}</div>
+                  <div className="text-sm text-gray-500 mt-0.5 break-all">{s.email}</div>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ml-2 ${roleClass}`}>
+                  {roleLabel}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-xs text-gray-400">{format(new Date(s.createdAt), "yyyy/MM/dd")} 登録</span>
+                {session?.user?.email !== s.email && (
+                  <DeleteStaffButton id={s.id} name={s.name} />
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* デスクトップ: テーブルレイアウト */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-green-50">
             <tr>
