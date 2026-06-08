@@ -20,7 +20,7 @@ function getMedicationChartData(fromDateStr: string) {
         orderBy: [{ animal: { name: "asc" } }, { medicineName: "asc" }],
         select: {
           id: true, medicineName: true, dosage: true, frequency: true,
-          remainingDoses: true, openedAt: true, expiresAfterDays: true,
+          remainingDoses: true, openedAt: true, expiresAfterDays: true, notes: true,
           animal: { select: { id: true, name: true } },
           logs: {
             where: { logDate: { gte: from } },
@@ -151,7 +151,7 @@ export default async function MedicationChartPage() {
               {medications.map((med, i) => {
                 const isLow = med.remainingDoses !== null && med.remainingDoses <= 3;
                 return (
-                  <tr key={med.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                  <tr key={med.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                     <td className="sticky left-0 z-10 bg-inherit px-2 sm:px-4 py-2 font-medium text-gray-800 border-b border-r text-xs sm:text-sm">
                       {med.animal.name}
                     </td>
@@ -166,6 +166,9 @@ export default async function MedicationChartPage() {
                         <div className={`text-xs mt-0.5 font-semibold ${isLow ? "text-red-500" : "text-gray-400"}`}>
                           残量: {med.remainingDoses}回{isLow && " ⚠️"}
                         </div>
+                      )}
+                      {med.notes && (
+                        <div className="text-xs text-gray-500 mt-0.5 italic">{med.notes}</div>
                       )}
                       {med.openedAt && med.expiresAfterDays && (() => {
                         const expiryDate = addDays(new Date(med.openedAt), med.expiresAfterDays);

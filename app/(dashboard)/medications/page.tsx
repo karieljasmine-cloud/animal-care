@@ -159,6 +159,9 @@ function MedicationList({
                   {expiryDate && <span className="ml-2">期限: {format(expiryDate, "yyyy/MM/dd", { locale: ja })}</span>}
                 </div>
               )}
+              {med.notes && (
+                <div className="text-xs text-gray-500 mt-1 italic">{med.notes}</div>
+              )}
               <div className="text-xs text-gray-400 mt-1">
                 {format(new Date(med.startDate), "yyyy/MM/dd", { locale: ja })} 〜{" "}
                 {med.endDate ? format(new Date(med.endDate), "yyyy/MM/dd", { locale: ja }) : "継続中"}
@@ -205,7 +208,12 @@ function MedicationList({
                       {med.animal.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{med.medicineName}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-gray-800">{med.medicineName}</div>
+                    {med.notes && (
+                      <div className="text-xs text-gray-500 mt-0.5 italic">{med.notes}</div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-gray-600 text-xs">
                     {med.dosage && <div>{med.dosage}</div>}
                     {med.frequency && <div>{med.frequency}</div>}
