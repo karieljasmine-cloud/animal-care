@@ -116,7 +116,7 @@ export default async function MedicationChartPage() {
                 <th className="sticky left-0 z-10 bg-green-50 px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[72px] sm:min-w-[100px]">
                   個体
                 </th>
-                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[140px] sm:min-w-[180px]">
+                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]">
                   薬品名 / 用量・頻度
                 </th>
                 {dates.map((d) => (
@@ -132,7 +132,7 @@ export default async function MedicationChartPage() {
               </tr>
               <tr>
                 <th className="sticky left-0 z-10 bg-green-50 border-b border-r min-w-[72px] sm:min-w-[100px]"></th>
-                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 border-b border-r min-w-[140px] sm:min-w-[180px]"></th>
+                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]"></th>
                 {dates.map((d) =>
                   times.map((t) => (
                     <th
@@ -155,7 +155,7 @@ export default async function MedicationChartPage() {
                     <td className="sticky left-0 z-10 bg-inherit px-2 sm:px-4 py-2 font-medium text-gray-800 border-b border-r text-xs sm:text-sm">
                       {med.animal.name}
                     </td>
-                    <td className="sticky left-[72px] sm:left-[100px] z-10 bg-inherit px-2 sm:px-4 py-2 border-b border-r">
+                    <td className="sticky left-[72px] sm:left-[100px] z-10 bg-inherit px-2 sm:px-4 py-2 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]">
                       <div className="font-medium text-gray-800 text-xs sm:text-sm">{med.medicineName}</div>
                       {(med.dosage || med.frequency) && (
                         <div className="text-xs text-gray-400">
@@ -168,7 +168,7 @@ export default async function MedicationChartPage() {
                         </div>
                       )}
                       {med.notes && (
-                        <div className="text-xs text-gray-500 mt-0.5 italic">{med.notes}</div>
+                        <div className="text-xs text-gray-500 mt-0.5 italic overflow-hidden" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{med.notes}</div>
                       )}
                       {med.openedAt && med.expiresAfterDays && (() => {
                         const expiryDate = addDays(new Date(med.openedAt), med.expiresAfterDays);
