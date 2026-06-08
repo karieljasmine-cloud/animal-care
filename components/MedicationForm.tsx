@@ -68,7 +68,7 @@ export default function MedicationForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">用量</label>
           <input
@@ -91,7 +91,7 @@ export default function MedicationForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">開始日 *</label>
           <input
@@ -132,7 +132,7 @@ export default function MedicationForm({
       {/* 目薬・液体薬：開封日管理 */}
       <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/50 space-y-3">
         <p className="text-xs font-medium text-blue-700">👁 目薬・液体薬の開封日管理（任意）</p>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">開封日</label>
             <input
