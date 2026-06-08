@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { format, subDays, startOfDay, addDays, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
-import { revalidatePath, updateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
+import ToggleLogButton from "@/components/ToggleLogButton";
 
 const DAYS = 7;
 
@@ -40,34 +40,6 @@ export default async function MedicationChartPage() {
   const from = dates[0];
 
   const medications = await getMedicationChartData(format(from, "yyyy-MM-dd"));
-
-  async function toggleLog(formData: FormData) {
-    "use server";
-    const sess = await auth();
-    const sId = (sess?.user as { id?: string })?.id;
-    const medicationId = formData.get("medicationId") as string;
-    const logDate = new Date(formData.get("logDate") as string);
-    const timeOfDay = formData.get("timeOfDay") as string;
-    const existing = formData.get("existing") as string;
-
-    if (existing === "true") {
-      await prisma.medicationLog.deleteMany({ where: { medicationId, logDate, timeOfDay } });
-      await prisma.medication.updateMany({
-        where: { id: medicationId, remainingDoses: { gt: 0 } },
-        data: { remainingDoses: { increment: 1 } },
-      });
-    } else {
-      await prisma.medicationLog.create({
-        data: { medicationId, logDate, timeOfDay, staffId: sId ?? null },
-      });
-      await prisma.medication.updateMany({
-        where: { id: medicationId, remainingDoses: { gt: 0 } },
-        data: { remainingDoses: { decrement: 1 } },
-      });
-    }
-    updateTag("medications");
-    revalidatePath("/medications/chart");
-  }
 
   type LogInfo = { staffName: string | null };
   const logMap = new Map<string, LogInfo>();
@@ -171,7 +143,7 @@ export default async function MedicationChartPage() {
                         <div className="text-xs text-gray-500 mt-0.5 italic overflow-hidden" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{med.notes}</div>
                       )}
                       {med.openedAt && med.expiresAfterDays && (() => {
-                        const expiryDate = addDays(new Date(med.openedAt), med.expiresAfterDays);
+                        const expiryDate = addDays(new Date(med.openedAt!), med.expiresAfterDays!);
                         const daysLeft = differenceInDays(expiryDate, today);
                         return (
                           <div className={`text-xs mt-0.5 font-semibold ${daysLeft < 0 ? "text-red-500" : daysLeft <= 7 ? "text-orange-500" : "text-blue-500"}`}>
@@ -192,32 +164,13 @@ export default async function MedicationChartPage() {
                             {isFuture ? (
                               <span className="w-10 h-10 flex items-center justify-center mx-auto text-gray-200 text-xs">—</span>
                             ) : (
-                              <form action={toggleLog}>
-                                <input type="hidden" name="medicationId" value={med.id} />
-                                <input type="hidden" name="logDate" value={`${dateStr}T00:00:00`} />
-                                <input type="hidden" name="timeOfDay" value={t} />
-                                <input type="hidden" name="existing" value={given ? "true" : "false"} />
-                                <button
-                                  type="submit"
-                                  title={
-                                    given
-                                      ? `${logInfo.staffName ?? "不明"}が投与 — 取り消す`
-                                      : "投与済みにする"
-                                  }
-                                  className={`w-12 h-12 rounded-full border-2 flex flex-col items-center justify-center mx-auto transition-colors cursor-pointer ${
-                                    given
-                                      ? "bg-green-500 border-green-500 text-white hover:bg-red-400 hover:border-red-400"
-                                      : "border-gray-300 text-gray-300 hover:border-green-400 hover:text-green-400"
-                                  }`}
-                                >
-                                  <span className="text-sm font-bold leading-none">{given ? "✓" : ""}</span>
-                                  {given && logInfo.staffName && (
-                                    <span className="text-[9px] leading-none mt-0.5 truncate max-w-[36px]">
-                                      {logInfo.staffName.slice(0, 3)}
-                                    </span>
-                                  )}
-                                </button>
-                              </form>
+                              <ToggleLogButton
+                                medicationId={med.id}
+                                logDate={`${dateStr}T00:00:00`}
+                                timeOfDay={t}
+                                initialGiven={given}
+                                staffName={logInfo?.staffName ?? null}
+                              />
                             )}
                           </td>
                         );

@@ -78,3 +78,30 @@ export async function deleteMedication(id: string) {
   updateTag("medications");
   revalidatePath("/medications");
 }
+
+export async function toggleMedicationLog(formData: FormData) {
+  const sess = await auth();
+  const sId = (sess?.user as { id?: string })?.id;
+  const medicationId = formData.get("medicationId") as string;
+  const logDate = new Date(formData.get("logDate") as string);
+  const timeOfDay = formData.get("timeOfDay") as string;
+  const existing = formData.get("existing") as string;
+
+  if (existing === "true") {
+    await prisma.medicationLog.deleteMany({ where: { medicationId, logDate, timeOfDay } });
+    await prisma.medication.updateMany({
+      where: { id: medicationId, remainingDoses: { gt: 0 } },
+      data: { remainingDoses: { increment: 1 } },
+    });
+  } else {
+    await prisma.medicationLog.create({
+      data: { medicationId, logDate, timeOfDay, staffId: sId ?? null },
+    });
+    await prisma.medication.updateMany({
+      where: { id: medicationId, remainingDoses: { gt: 0 } },
+      data: { remainingDoses: { decrement: 1 } },
+    });
+  }
+  updateTag("medications");
+  revalidatePath("/medications/chart");
+}
