@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import { format, subDays, startOfDay } from "date-fns";
+import { format, subDays, startOfDay, addDays, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { revalidatePath, updateTag, unstable_cache } from "next/cache";
 
@@ -18,7 +18,9 @@ function getMedicationChartData(fromDateStr: string) {
           OR: [{ endDate: null }, { endDate: { gte: now } }],
         },
         orderBy: [{ animal: { name: "asc" } }, { medicineName: "asc" }],
-        include: {
+        select: {
+          id: true, medicineName: true, dosage: true, frequency: true,
+          remainingDoses: true, openedAt: true, expiresAfterDays: true,
           animal: { select: { id: true, name: true } },
           logs: {
             where: { logDate: { gte: from } },
@@ -165,6 +167,15 @@ export default async function MedicationChartPage() {
                           残量: {med.remainingDoses}回{isLow && " ⚠️"}
                         </div>
                       )}
+                      {med.openedAt && med.expiresAfterDays && (() => {
+                        const expiryDate = addDays(new Date(med.openedAt), med.expiresAfterDays);
+                        const daysLeft = differenceInDays(expiryDate, today);
+                        return (
+                          <div className={`text-xs mt-0.5 font-semibold ${daysLeft < 0 ? "text-red-500" : daysLeft <= 7 ? "text-orange-500" : "text-blue-500"}`}>
+                            {daysLeft < 0 ? `期限切れ ${Math.abs(daysLeft)}日前 ⚠️` : `開封後残${daysLeft}日`}
+                          </div>
+                        );
+                      })()}
                     </td>
                     {dates.map((d) =>
                       times.map((t) => {

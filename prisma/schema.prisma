@@ -83,8 +83,10 @@ model Medication {
   startDate       DateTime
   endDate         DateTime?
   administeredAt  DateTime?
-  remainingDoses  Int?
-  notes           String?
+  remainingDoses   Int?
+  openedAt         DateTime?
+  expiresAfterDays Int?
+  notes            String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   logs            MedicationLog[]

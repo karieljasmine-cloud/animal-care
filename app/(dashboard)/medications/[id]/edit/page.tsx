@@ -6,7 +6,14 @@ export default async function EditMedicationPage(props: { params: Promise<{ id: 
   const { id } = await props.params;
 
   const [medication, animals] = await Promise.all([
-    prisma.medication.findUnique({ where: { id } }),
+    prisma.medication.findUnique({
+      where: { id },
+      select: {
+        id: true, animalId: true, medicineName: true, dosage: true, frequency: true,
+        startDate: true, endDate: true, administeredAt: true, remainingDoses: true,
+        openedAt: true, expiresAfterDays: true, notes: true,
+      },
+    }),
     prisma.animal.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },

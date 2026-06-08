@@ -15,6 +15,8 @@ type MedicationData = {
   endDate: Date | null;
   administeredAt: Date | null;
   remainingDoses: number | null;
+  openedAt: Date | null;
+  expiresAfterDays: number | null;
   notes: string | null;
 };
 
@@ -111,20 +113,11 @@ export default function MedicationForm({
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">投与日時</label>
-        <input
-          type="datetime-local"
-          name="administeredAt"
-          defaultValue={medication?.administeredAt ? format(new Date(medication.administeredAt), "yyyy-MM-dd'T'HH:mm") : ""}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      </div>
-
+      {/* 残量（錠・回数） */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           残量（錠数・回数）
-          <span className="ml-2 text-xs font-normal text-gray-400">チェック表で残量が自動カウントダウンされます</span>
+          <span className="ml-2 text-xs font-normal text-gray-400">チェック表で投与のたびに自動カウントダウン</span>
         </label>
         <input
           type="number"
@@ -134,6 +127,39 @@ export default function MedicationForm({
           placeholder="例: 30"
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
         />
+      </div>
+
+      {/* 目薬・液体薬：開封日管理 */}
+      <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/50 space-y-3">
+        <p className="text-xs font-medium text-blue-700">👁 目薬・液体薬の開封日管理（任意）</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">開封日</label>
+            <input
+              type="date"
+              name="openedAt"
+              defaultValue={fmtDate(medication?.openedAt)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              開封後使用期限
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                name="expiresAfterDays"
+                min="1"
+                defaultValue={medication?.expiresAfterDays?.toString() ?? ""}
+                placeholder="例: 28"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+              />
+              <span className="text-sm text-gray-500 whitespace-nowrap">日間</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400">開封日と使用期限日数を入力すると、投薬記録一覧に残り日数が表示されます</p>
       </div>
 
       <div>
