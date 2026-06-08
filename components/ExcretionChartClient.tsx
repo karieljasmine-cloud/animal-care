@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useState } from "react";
 import { quickUpdateExcretion } from "@/app/actions/daily-records";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -48,7 +48,7 @@ function urineCls(v: string | null) {
 
 export default function ExcretionChartClient({ animals, dates, initialData }: Props) {
   const [data, setData] = useState<Record<string, CellData>>(initialData);
-  const [isPending, startTransition] = useTransition();
+  const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
 
   const handleClick = (
     animalId: string,
@@ -56,35 +56,46 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
     timeOfDay: string,
     field: "stool" | "urine"
   ) => {
-    const key = `${animalId}_${dateStr}_${timeOfDay}`;
-    const current = data[key] ?? { stoolCondition: null, urineAmount: null, recordId: null };
+    const baseKey = `${animalId}_${dateStr}_${timeOfDay}`;
+    const pendingKey = `${baseKey}_${field}`;
+    if (pendingKeys.has(pendingKey)) return;
+
+    const current = data[baseKey] ?? { stoolCondition: null, urineAmount: null, recordId: null };
     const currentValue = field === "stool" ? current.stoolCondition : current.urineAmount;
     const cycle = field === "stool" ? STOOL_CYCLE : URINE_CYCLE;
     const nextValue = cycle[(cycle.indexOf(currentValue) + 1) % cycle.length];
 
+    // 即時切り替え
     setData(prev => ({
       ...prev,
-      [key]: {
+      [baseKey]: {
         ...current,
         [field === "stool" ? "stoolCondition" : "urineAmount"]: nextValue,
       },
     }));
+    setPendingKeys(prev => new Set([...prev, pendingKey]));
 
-    startTransition(async () => {
-      try {
-        const result = await quickUpdateExcretion(animalId, dateStr, timeOfDay, field, currentValue);
+    quickUpdateExcretion(animalId, dateStr, timeOfDay, field, currentValue)
+      .then(result => {
         setData(prev => ({
           ...prev,
-          [key]: {
+          [baseKey]: {
             stoolCondition: result.stoolCondition,
             urineAmount: result.urineAmount,
             recordId: result.recordId,
           },
         }));
-      } catch {
-        setData(prev => ({ ...prev, [key]: current }));
-      }
-    });
+      })
+      .catch(() => {
+        setData(prev => ({ ...prev, [baseKey]: current }));
+      })
+      .finally(() => {
+        setPendingKeys(prev => {
+          const next = new Set(prev);
+          next.delete(pendingKey);
+          return next;
+        });
+      });
   };
 
   return (
@@ -113,7 +124,7 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
                 <th
                   key={`${d.toISOString()}_${t}`}
                   className={`px-1 py-1 text-center text-xs font-medium border-b border-r min-w-[56px] ${
-                    t === "AM" ? "text-orange-400 bg-orange-50/40" : "text-indigo-400 bg-indigo-50/40"
+                    t === "AM" ? "text-orange-400 bg-orange-50" : "text-indigo-400 bg-indigo-50"
                   }`}
                 >
                   {t === "AM" ? "☀朝" : "★夜"}
@@ -124,7 +135,7 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
         </thead>
         <tbody>
           {animals.map((animal, i) => (
-            <tr key={animal.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}>
+            <tr key={animal.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
               <td className="sticky left-0 z-10 bg-inherit px-2 py-1 font-medium text-gray-800 border-b border-r text-sm whitespace-nowrap">
                 {animal.name}
               </td>
@@ -133,12 +144,14 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
                   const dateStr = format(d, "yyyy-MM-dd");
                   const key = `${animal.id}_${dateStr}_${t}`;
                   const cell = data[key] ?? { stoolCondition: null, urineAmount: null, recordId: null };
+                  const stoolPending = pendingKeys.has(`${key}_stool`);
+                  const urinePending = pendingKeys.has(`${key}_urine`);
                   return (
                     <td key={`${d.toISOString()}_${t}`} className="px-1 py-1 border-b border-r">
                       <div className="flex flex-col gap-0.5 w-[54px]">
                         <button
                           onClick={() => handleClick(animal.id, dateStr, t, "stool")}
-                          disabled={isPending}
+                          disabled={stoolPending}
                           className={`w-full h-[42px] rounded flex items-center justify-center gap-0.5 font-bold text-lg transition-all active:scale-95 disabled:opacity-50 ${stoolCls(cell.stoolCondition)}`}
                         >
                           <span className="text-[9px] font-normal text-gray-400 leading-none">便</span>
@@ -146,7 +159,7 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
                         </button>
                         <button
                           onClick={() => handleClick(animal.id, dateStr, t, "urine")}
-                          disabled={isPending}
+                          disabled={urinePending}
                           className={`w-full h-[42px] rounded flex items-center justify-center gap-0.5 font-bold text-lg transition-all active:scale-95 disabled:opacity-50 ${urineCls(cell.urineAmount)}`}
                         >
                           <span className="text-[9px] font-normal text-gray-400 leading-none">尿</span>
