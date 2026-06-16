@@ -34,16 +34,16 @@ function urineSym(v: string | null) {
   return "×";
 }
 function stoolCls(v: string | null) {
-  if (!v) return "text-gray-300 bg-gray-50";
-  if (v === "良好") return "text-green-600 bg-green-50 border border-green-200";
-  if (v === "軟便") return "text-yellow-600 bg-yellow-50 border border-yellow-200";
-  return "text-red-500 bg-red-50 border border-red-200";
+  if (!v) return "text-gray-400 bg-gray-50";
+  if (v === "良好") return "text-green-900 bg-green-200 border-2 border-green-500";
+  if (v === "軟便") return "text-amber-900 bg-amber-200 border-2 border-amber-500";
+  return "text-red-900 bg-red-200 border-2 border-red-600";
 }
 function urineCls(v: string | null) {
-  if (!v) return "text-gray-300 bg-gray-50";
-  if (v === "普通") return "text-blue-500 bg-blue-50 border border-blue-200";
-  if (v === "少ない") return "text-orange-400 bg-orange-50 border border-orange-200";
-  return "text-red-400 bg-red-50 border border-red-200";
+  if (!v) return "text-gray-400 bg-gray-50";
+  if (v === "普通") return "text-blue-900 bg-blue-200 border-2 border-blue-500";
+  if (v === "少ない") return "text-orange-900 bg-orange-200 border-2 border-orange-500";
+  return "text-red-900 bg-red-200 border-2 border-red-600";
 }
 
 export default function ExcretionChartClient({ animals, dates, initialData }: Props) {

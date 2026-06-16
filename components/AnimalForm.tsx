@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { createAnimal, updateAnimal } from "@/app/actions/animals";
 import { format } from "date-fns";
 
@@ -26,22 +27,62 @@ function fmtDate(d: Date | null | undefined) {
 }
 
 export default function AnimalForm({ animal }: { animal?: AnimalData }) {
-  const action = animal
-    ? updateAnimal.bind(null, animal.id)
-    : createAnimal;
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const action = animal ? updateAnimal.bind(null, animal.id) : createAnimal;
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const form = e.currentTarget;
+    const newErrors: Record<string, string> = {};
+
+    const nameVal = (form.elements.namedItem("name") as HTMLInputElement)?.value?.trim();
+    const speciesVal = (form.elements.namedItem("species") as HTMLSelectElement)?.value;
+    const sexVal = (form.elements.namedItem("sex") as HTMLSelectElement)?.value;
+    const intakeDateVal = (form.elements.namedItem("intakeDate") as HTMLInputElement)?.value;
+
+    if (!nameVal) newErrors.name = "名前を入力してください";
+    if (!speciesVal) newErrors.species = "種類を選択してください";
+    if (!sexVal) newErrors.sex = "性別を選択してください";
+    if (!intakeDateVal) newErrors.intakeDate = "受け入れ日を入力してください";
+
+    if (Object.keys(newErrors).length > 0) {
+      e.preventDefault();
+      setErrors(newErrors);
+      setTimeout(() => {
+        document.querySelector("[data-has-error]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
+      return;
+    }
+    setErrors({});
+  }
+
+  const hasErrors = Object.keys(errors).length > 0;
 
   return (
-    <form action={action} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+    <form action={action} onSubmit={handleSubmit} noValidate className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+      {hasErrors && (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-4 text-red-700 text-sm" data-has-error>
+          <div className="font-semibold mb-1">入力が必要な項目があります</div>
+          <ul className="list-disc list-inside space-y-0.5 text-xs">
+            {Object.values(errors).map((err, i) => (
+              <li key={i}>{err}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <Section title="基本情報">
-        <Field label="名前 *" name="name" required defaultValue={animal?.name} />
+        <Field label="名前" name="name" required defaultValue={animal?.name} error={errors.name} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">種類 *</label>
+          <div data-has-error={!!errors.species || undefined}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              種類 <span className="text-red-500">*</span>
+            </label>
             <select
               name="species"
-              required
               defaultValue={animal?.species ?? ""}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                errors.species ? "border-red-400 focus:ring-red-400 bg-red-50" : "border-gray-300 focus:ring-green-500"
+              }`}
             >
               <option value="">選択してください</option>
               <option value="犬">犬</option>
@@ -49,27 +90,32 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
               <option value="うさぎ">うさぎ</option>
               <option value="その他">その他</option>
             </select>
+            {errors.species && <p className="text-red-500 text-xs mt-1">{errors.species}</p>}
           </div>
           <Field label="品種" name="breed" defaultValue={animal?.breed ?? ""} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">性別 *</label>
+          <div data-has-error={!!errors.sex || undefined}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              性別 <span className="text-red-500">*</span>
+            </label>
             <select
               name="sex"
-              required
               defaultValue={animal?.sex ?? ""}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                errors.sex ? "border-red-400 focus:ring-red-400 bg-red-50" : "border-gray-300 focus:ring-green-500"
+              }`}
             >
               <option value="">選択してください</option>
               <option value="male">♂ オス</option>
               <option value="female">♀ メス</option>
             </select>
+            {errors.sex && <p className="text-red-500 text-xs mt-1">{errors.sex}</p>}
           </div>
           <Field label="生年月日" name="birthDate" type="date" defaultValue={fmtDate(animal?.birthDate)} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="受け入れ日 *" name="intakeDate" type="date" required defaultValue={fmtDate(animal?.intakeDate)} />
+          <Field label="受け入れ日" name="intakeDate" type="date" required defaultValue={fmtDate(animal?.intakeDate)} error={errors.intakeDate} />
           <Field label="繁殖者・譲渡元氏名" name="breederName" defaultValue={animal?.breederName ?? ""} />
         </div>
         <Field label="持病" name="conditions" defaultValue={animal?.conditions ?? ""} />
@@ -134,23 +180,30 @@ function Field({
   type = "text",
   required = false,
   defaultValue = "",
+  error,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
   defaultValue?: string;
+  error?: string;
 }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <div data-has-error={!!error || undefined}>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
       <input
         type={type}
         name={name}
-        required={required}
         defaultValue={defaultValue}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+          error ? "border-red-400 focus:ring-red-400 bg-red-50" : "border-gray-300 focus:ring-green-500"
+        }`}
       />
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   );
 }

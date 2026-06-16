@@ -1,37 +1,54 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { format, subDays, startOfDay } from "date-fns";
+import { ja } from "date-fns/locale";
 import ExcretionChartClient from "@/components/ExcretionChartClient";
 import { unstable_cache } from "next/cache";
 
 const DAYS = 7;
 
-const getChartData = unstable_cache(
-  async () => {
-    const today = startOfDay(new Date());
-    const from = subDays(today, DAYS - 1);
-    const [animals, records] = await Promise.all([
-      prisma.animal.findMany({
-        where: { isActive: true },
-        orderBy: { name: "asc" },
-        select: { id: true, name: true },
-      }),
-      prisma.dailyRecord.findMany({
-        where: { recordDate: { gte: from } },
-        select: { id: true, animalId: true, recordDate: true, stoolCondition: true, urineAmount: true, timeOfDay: true },
-      }),
-    ]);
-    return { animals, records };
-  },
-  ["excretion-chart"],
-  { revalidate: 30, tags: ["daily-records", "animals"] }
-);
+function getChartData(fromDateStr: string) {
+  return unstable_cache(
+    async () => {
+      const from = new Date(fromDateStr);
+      const [animals, records] = await Promise.all([
+        prisma.animal.findMany({
+          where: { isActive: true },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        }),
+        prisma.dailyRecord.findMany({
+          where: { recordDate: { gte: from } },
+          select: { id: true, animalId: true, recordDate: true, stoolCondition: true, urineAmount: true, timeOfDay: true },
+        }),
+      ]);
+      return { animals, records };
+    },
+    ["excretion-chart", fromDateStr],
+    { revalidate: 30, tags: ["daily-records", "animals"] }
+  )();
+}
 
-export default async function StoolChartPage() {
+function weekLabel(offset: number) {
+  if (offset === 0) return "今週";
+  if (offset === 1) return "先週";
+  return `${offset}週前`;
+}
+
+export default async function StoolChartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string }>;
+}) {
+  const sp = await searchParams;
+  const weekOffset = Math.max(0, parseInt(sp.week ?? "0") || 0);
+
   const today = startOfDay(new Date());
-  const { animals, records } = await getChartData();
+  const anchor = subDays(today, weekOffset * 7);
+  const dates = Array.from({ length: DAYS }, (_, i) => subDays(anchor, DAYS - 1 - i));
+  const from = dates[0];
 
-  const dates = Array.from({ length: DAYS }, (_, i) => subDays(today, DAYS - 1 - i));
+  const { animals, records } = await getChartData(format(from, "yyyy-MM-dd"));
 
   const initialData: Record<string, { stoolCondition: string | null; urineAmount: string | null; recordId: string | null }> = {};
   for (const r of records) {
@@ -44,6 +61,9 @@ export default async function StoolChartPage() {
     };
   }
 
+  const startLabel = format(dates[0], "M/d(E)", { locale: ja });
+  const endLabel = format(dates[DAYS - 1], "M/d(E)", { locale: ja });
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -53,8 +73,32 @@ export default async function StoolChartPage() {
         </Link>
       </div>
 
+      {/* 週ナビゲーション */}
+      <div className="flex items-center justify-between mb-4 bg-white rounded-lg shadow-sm px-4 py-2">
+        <Link
+          href={`/daily-records/chart?week=${weekOffset + 1}`}
+          className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+        >
+          ← 前の週
+        </Link>
+        <div className="text-center">
+          <div className="text-sm font-semibold text-gray-700">{weekLabel(weekOffset)}</div>
+          <div className="text-xs text-gray-400">{startLabel} 〜 {endLabel}</div>
+        </div>
+        {weekOffset > 0 ? (
+          <Link
+            href={`/daily-records/chart?week=${weekOffset - 1}`}
+            className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+          >
+            次の週 →
+          </Link>
+        ) : (
+          <span className="text-sm text-gray-300 px-3 py-1.5">次の週 →</span>
+        )}
+      </div>
+
       <div className="mb-3 bg-gray-50 rounded-lg p-3 text-xs text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
-        <span className="font-medium">タップで切替：— → <span className="text-green-600 font-bold">○</span>（良好）→ <span className="text-yellow-600 font-bold">△</span>（軟便/少）→ <span className="text-red-500 font-bold">×</span>（下痢/なし）→ —</span>
+        <span className="font-medium">タップで切替：— → <span className="text-green-700 font-bold">○</span>（良好）→ <span className="text-amber-700 font-bold">△</span>（軟便/少）→ <span className="text-red-700 font-bold">×</span>（下痢/なし）→ —</span>
       </div>
 
       <ExcretionChartClient

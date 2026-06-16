@@ -34,9 +34,23 @@ function getMedicationChartData(fromDateStr: string) {
   )();
 }
 
-export default async function MedicationChartPage() {
+function weekLabel(offset: number) {
+  if (offset === 0) return "今週";
+  if (offset === 1) return "先週";
+  return `${offset}週前`;
+}
+
+export default async function MedicationChartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string }>;
+}) {
+  const sp = await searchParams;
+  const weekOffset = Math.max(0, parseInt(sp.week ?? "0") || 0);
+
   const today = startOfDay(new Date());
-  const dates = Array.from({ length: DAYS }, (_, i) => subDays(today, DAYS - 1 - i));
+  const anchor = subDays(today, weekOffset * 7);
+  const dates = Array.from({ length: DAYS }, (_, i) => subDays(anchor, DAYS - 1 - i));
   const from = dates[0];
 
   const medications = await getMedicationChartData(format(from, "yyyy-MM-dd"));
@@ -51,6 +65,8 @@ export default async function MedicationChartPage() {
   }
 
   const times = ["AM", "PM"];
+  const startLabel = format(dates[0], "M/d(E)", { locale: ja });
+  const endLabel = format(dates[DAYS - 1], "M/d(E)", { locale: ja });
 
   return (
     <div>
@@ -59,6 +75,30 @@ export default async function MedicationChartPage() {
         <Link href="/medications" className="text-sm text-green-600 hover:underline">
           ← 投薬記録一覧へ
         </Link>
+      </div>
+
+      {/* 週ナビゲーション */}
+      <div className="flex items-center justify-between mb-4 bg-white rounded-lg shadow-sm px-4 py-2">
+        <Link
+          href={`/medications/chart?week=${weekOffset + 1}`}
+          className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+        >
+          ← 前の週
+        </Link>
+        <div className="text-center">
+          <div className="text-sm font-semibold text-gray-700">{weekLabel(weekOffset)}</div>
+          <div className="text-xs text-gray-400">{startLabel} 〜 {endLabel}</div>
+        </div>
+        {weekOffset > 0 ? (
+          <Link
+            href={`/medications/chart?week=${weekOffset - 1}`}
+            className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+          >
+            次の週 →
+          </Link>
+        ) : (
+          <span className="text-sm text-gray-300 px-3 py-1.5">次の週 →</span>
+        )}
       </div>
 
       <div className="mb-3 flex flex-wrap gap-4 text-sm">
