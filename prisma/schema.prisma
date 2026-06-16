@@ -43,6 +43,7 @@ model Animal {
   medications    Medication[]
   vaccines       Vaccine[]
   weightRecords  WeightRecord[]
+  events         AnimalEvent[]
 }
 
 model DailyRecord {
@@ -124,4 +125,16 @@ model WeightRecord {
   recordedAt DateTime
   notes      String?
   createdAt  DateTime @default(now())
+}
+
+model AnimalEvent {
+  id        String   @id @default(cuid())
+  animalId  String
+  animal    Animal   @relation(fields: [animalId], references: [id])
+  eventDate DateTime
+  eventType String
+  title     String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

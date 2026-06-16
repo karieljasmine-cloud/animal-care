@@ -22,6 +22,7 @@ export default function Navbar({ userName, userRole }: { userName: string; userR
     ...(canSeeAnimals ? [{ href: "/animals", label: "個体台帳", icon: "🐾" }] : []),
     { href: "/daily-records", label: "日次記録", icon: "📋" },
     { href: "/medications", label: "投薬記録", icon: "💊" },
+    { href: "/events", label: "特記事項", icon: "📅" },
     ...(isAdmin ? [{ href: "/staff", label: "スタッフ管理", icon: "👥" }] : []),
   ];
 
