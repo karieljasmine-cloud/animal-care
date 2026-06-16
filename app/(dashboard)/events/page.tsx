@@ -16,6 +16,7 @@ import { ja } from "date-fns/locale";
 import { unstable_cache } from "next/cache";
 import AnimalSelectorClient from "@/components/AnimalSelectorClient";
 import DeleteEventButton from "@/components/DeleteEventButton";
+import CalendarCell from "@/components/CalendarCell";
 
 const EVENT_TYPE_CONFIG = {
   adHocMed: { label: "突発的なお薬", color: "bg-purple-100 text-purple-800", dotColor: "bg-purple-500", icon: "💊" },
@@ -167,74 +168,44 @@ export default async function EventsCalendarPage({
 
       {/* Calendar grid */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-        <div className="overflow-x-auto">
-          <div style={{ minWidth: "640px" }}>
-            {/* Day of week header */}
-            <div className="grid grid-cols-7 border-b bg-gray-50">
-              {DOW.map((d, i) => (
-                <div
-                  key={d}
-                  className={`py-2 text-center text-xs font-semibold ${
-                    i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-500"
-                  }`}
-                >
-                  {d}
-                </div>
-              ))}
+        {/* Day of week header */}
+        <div className="grid grid-cols-7 border-b bg-gray-50">
+          {DOW.map((d, i) => (
+            <div
+              key={d}
+              className={`py-1.5 text-center text-[10px] font-semibold ${
+                i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-500"
+              }`}
+            >
+              {d}
             </div>
-            {/* Calendar cells */}
-            <div className="grid grid-cols-7 divide-x divide-y">
-              {calDays.map((day) => {
-                const dateKey = format(day, "yyyy-MM-dd");
-                const dayEvents = eventsByDate.get(dateKey) ?? [];
-                const inMonth = isSameMonth(day, currentDate);
-                const today = isToday(day);
-                const dow = day.getDay();
+          ))}
+        </div>
+        {/* Calendar cells */}
+        <div className="grid grid-cols-7 divide-x divide-y">
+          {calDays.map((day) => {
+            const dateKey = format(day, "yyyy-MM-dd");
+            const dayEvents = eventsByDate.get(dateKey) ?? [];
+            const inMonth = isSameMonth(day, currentDate);
+            const today = isToday(day);
+            const dow = day.getDay();
 
-                return (
-                  <div
-                    key={dateKey}
-                    className={`min-h-[96px] p-1 ${!inMonth ? "bg-gray-50" : "bg-white"}`}
-                  >
-                    <div
-                      className={`text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full mx-auto ${
-                        today
-                          ? "bg-green-600 text-white"
-                          : dow === 0
-                          ? inMonth ? "text-red-500" : "text-red-200"
-                          : dow === 6
-                          ? inMonth ? "text-blue-500" : "text-blue-200"
-                          : inMonth
-                          ? "text-gray-700"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      {format(day, "d")}
-                    </div>
-                    <div className="space-y-0.5">
-                      {dayEvents.slice(0, 4).map((ev) => {
-                        const cfg = EVENT_TYPE_CONFIG[ev.eventType as EventType];
-                        return (
-                          <div
-                            key={ev.id}
-                            className={`text-[11px] px-1.5 py-0.5 rounded font-semibold truncate ${cfg?.color ?? "bg-gray-100 text-gray-700"}`}
-                            title={`${ev.animal.name}：${ev.title}`}
-                          >
-                            {cfg?.icon} {ev.animal.name}
-                          </div>
-                        );
-                      })}
-                      {dayEvents.length > 4 && (
-                        <div className="text-[10px] text-gray-400 pl-1">
-                          +{dayEvents.length - 4}件
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+            return (
+              <CalendarCell
+                key={dateKey}
+                dayNum={parseInt(format(day, "d"))}
+                inMonth={inMonth}
+                today={today}
+                dow={dow}
+                events={dayEvents.map((ev) => ({
+                  id: ev.id,
+                  eventType: ev.eventType,
+                  title: ev.title,
+                  animalName: ev.animal.name,
+                }))}
+              />
+            );
+          })}
         </div>
       </div>
 
