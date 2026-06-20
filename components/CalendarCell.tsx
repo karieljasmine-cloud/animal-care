@@ -32,9 +32,9 @@ export default function CalendarCell({ dayNum, inMonth, today, dow, events }: Pr
   const hasMore = events.length > MAX;
 
   return (
-    <div className={`min-h-[80px] p-0.5 ${!inMonth ? "bg-gray-50" : "bg-white"}`}>
+    <div className={`min-h-[90px] p-1 ${!inMonth ? "bg-gray-50" : "bg-white"}`}>
       <div
-        className={`text-[10px] font-semibold mb-0.5 w-5 h-5 flex items-center justify-center rounded-full mx-auto ${
+        className={`text-[11px] font-semibold mb-0.5 w-5 h-5 flex items-center justify-center rounded-full mx-auto ${
           today
             ? "bg-green-600 text-white"
             : dow === 0
@@ -54,7 +54,7 @@ export default function CalendarCell({ dayNum, inMonth, today, dow, events }: Pr
           return (
             <div
               key={ev.id}
-              className={`text-[9px] px-0.5 py-px rounded leading-tight truncate ${cfg?.color ?? "bg-gray-100 text-gray-700"}`}
+              className={`text-[10px] px-1 py-px rounded leading-tight truncate ${cfg?.color ?? "bg-gray-100 text-gray-700"}`}
               title={`${ev.animalName}：${ev.title}`}
             >
               {cfg?.icon}{ev.animalName.slice(0, 5)}
@@ -64,7 +64,7 @@ export default function CalendarCell({ dayNum, inMonth, today, dow, events }: Pr
         {hasMore && !expanded && (
           <button
             onClick={() => setExpanded(true)}
-            className="text-[9px] text-blue-500 hover:text-blue-700 leading-tight pl-0.5"
+            className="text-[10px] text-blue-500 hover:text-blue-700 leading-tight pl-0.5"
           >
             +{events.length - MAX}件
           </button>

@@ -167,7 +167,7 @@ export default async function EventsCalendarPage({
       </div>
 
       {/* Calendar grid */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+      <div className="bg-white shadow-sm overflow-hidden mb-6 -mx-4">
         {/* Day of week header */}
         <div className="grid grid-cols-7 border-b bg-gray-50">
           {DOW.map((d, i) => (
