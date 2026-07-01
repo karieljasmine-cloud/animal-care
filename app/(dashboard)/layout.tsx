@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +17,7 @@ export default async function DashboardLayout({
         userName={session.user.name ?? ""}
         userRole={(session.user as { role?: string }).role ?? "staff"}
       />
+      <ScrollToTop />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
         {children}
       </main>

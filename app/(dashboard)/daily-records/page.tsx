@@ -32,12 +32,23 @@ function getDailyRecords(animalId?: string) {
   )();
 }
 
-const SPECIES_ICON: Record<string, string> = {
-  犬: "🐕",
-  猫: "🐈",
-  うさぎ: "🐇",
-  その他: "🐾",
-};
+const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
+const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
+
+function sortAndGroupBySpecies<T extends { species: string; name: string }>(arr: T[]) {
+  const sorted = [...arr].sort((a, b) => {
+    const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : SPECIES_ORDER.length; };
+    const dr = si(a.species) - si(b.species);
+    return dr !== 0 ? dr : a.name.localeCompare(b.name, "ja");
+  });
+  const groups: { species: string; items: T[] }[] = [];
+  for (const item of sorted) {
+    const last = groups[groups.length - 1];
+    if (last?.species === item.species) last.items.push(item);
+    else groups.push({ species: item.species, items: [item] });
+  }
+  return groups;
+}
 
 export default async function DailyRecordsPage({
   searchParams,
@@ -52,6 +63,7 @@ export default async function DailyRecordsPage({
   ]);
 
   const selectedAnimal = animals.find((a) => a.id === animalId);
+  const animalGroups = sortAndGroupBySpecies(animals);
 
   return (
     <div>
@@ -84,35 +96,42 @@ export default async function DailyRecordsPage({
             </Link>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {animals.map((animal) => {
-            const icon = SPECIES_ICON[animal.species] ?? "🐾";
-            const isSelected = animal.id === animalId;
-            return (
-              <div
-                key={animal.id}
-                className={`bg-white rounded-xl shadow-sm p-3 flex items-center justify-between gap-2 border-2 transition-colors ${
-                  isSelected ? "border-green-500" : "border-transparent"
-                }`}
-              >
-                <Link
-                  href={`/daily-records?animalId=${animal.id}`}
-                  className="flex items-center gap-2 min-w-0 flex-1"
-                >
-                  <span className="text-lg">{icon}</span>
-                  <span className={`text-sm font-medium truncate ${isSelected ? "text-green-700" : "text-gray-800"}`}>
-                    {animal.name}
-                  </span>
-                </Link>
-                <Link
-                  href={`/daily-records/new?animalId=${animal.id}`}
-                  className="shrink-0 bg-green-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
-                >
-                  ＋ 記録
-                </Link>
+        <div className="space-y-3">
+          {animalGroups.map(({ species, items }) => (
+            <div key={species}>
+              <p className="text-xs font-semibold text-gray-400 mb-1.5 flex items-center gap-1">
+                {SPECIES_ICON[species] ?? "🐾"} {species}（{items.length}頭）
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {items.map((animal) => {
+                  const isSelected = animal.id === animalId;
+                  return (
+                    <div
+                      key={animal.id}
+                      className={`bg-white rounded-xl shadow-sm p-3 flex items-center justify-between gap-2 border-2 transition-colors ${
+                        isSelected ? "border-green-500" : "border-transparent"
+                      }`}
+                    >
+                      <Link
+                        href={`/daily-records?animalId=${animal.id}`}
+                        className="flex items-center gap-2 min-w-0 flex-1"
+                      >
+                        <span className={`text-sm font-medium truncate ${isSelected ? "text-green-700" : "text-gray-800"}`}>
+                          {animal.name}
+                        </span>
+                      </Link>
+                      <Link
+                        href={`/daily-records/new?animalId=${animal.id}`}
+                        className="shrink-0 bg-green-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                      >
+                        ＋ 記録
+                      </Link>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 

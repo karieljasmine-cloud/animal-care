@@ -6,6 +6,9 @@ import { ja } from "date-fns/locale";
 import { unstable_cache } from "next/cache";
 import ToggleLogButton from "@/components/ToggleLogButton";
 
+const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
+const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
+
 const DAYS = 7;
 
 function getMedicationChartData(fromDateStr: string) {
@@ -22,7 +25,7 @@ function getMedicationChartData(fromDateStr: string) {
         select: {
           id: true, medicineName: true, dosage: true, frequency: true,
           remainingDoses: true, openedAt: true, expiresAfterDays: true, notes: true,
-          animal: { select: { id: true, name: true } },
+          animal: { select: { id: true, name: true, species: true } },
           logs: {
             where: { logDate: { gte: from } },
             select: { id: true, logDate: true, timeOfDay: true, staff: { select: { name: true } } },
@@ -55,7 +58,14 @@ export default async function MedicationChartPage({
   const dates = Array.from({ length: DAYS }, (_, i) => subDays(anchor, DAYS - 1 - i));
   const from = dates[0];
 
-  const medications = await getMedicationChartData(format(from, "yyyy-MM-dd"));
+  const rawMedications = await getMedicationChartData(format(from, "yyyy-MM-dd"));
+  const medications = [...rawMedications].sort((a, b) => {
+    const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : SPECIES_ORDER.length; };
+    const dr = si(a.animal.species) - si(b.animal.species);
+    if (dr !== 0) return dr;
+    if (a.animal.name !== b.animal.name) return a.animal.name.localeCompare(b.animal.name, "ja");
+    return a.medicineName.localeCompare(b.medicineName, "ja");
+  });
 
   type LogInfo = { staffName: string | null };
   const logMap = new Map<string, LogInfo>();
@@ -171,9 +181,15 @@ export default async function MedicationChartPage({
             <tbody>
               {medications.map((med, i) => {
                 const isLow = med.remainingDoses !== null && med.remainingDoses <= 3;
+                const isFirstOfSpecies = i === 0 || medications[i - 1].animal.species !== med.animal.species;
                 return (
                   <tr key={med.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                     <td className="sticky left-0 z-10 bg-inherit px-2 sm:px-4 py-2 font-medium text-gray-800 border-b border-r text-xs sm:text-sm">
+                      {isFirstOfSpecies && (
+                        <div className="text-xs text-gray-400 font-normal -mt-0.5 mb-0.5">
+                          {SPECIES_ICON[med.animal.species] ?? "🐾"} {med.animal.species}
+                        </div>
+                      )}
                       {med.animal.name}
                     </td>
                     <td className="sticky left-[72px] sm:left-[100px] z-10 bg-inherit px-2 sm:px-4 py-2 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]">

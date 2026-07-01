@@ -5,11 +5,23 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { unstable_cache } from "next/cache";
+import { Fragment } from "react";
+
+const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
+const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
+
+function sortBySpecies<T extends { species: string; name: string }>(arr: T[]): T[] {
+  return [...arr].sort((a, b) => {
+    const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : SPECIES_ORDER.length; };
+    const dr = si(a.species) - si(b.species);
+    return dr !== 0 ? dr : a.name.localeCompare(b.name, "ja");
+  });
+}
 
 const getAnimals = unstable_cache(
   () =>
     prisma.animal.findMany({
-      orderBy: [{ isActive: "desc" }, { name: "asc" }],
+      orderBy: { name: "asc" },
       include: { _count: { select: { dailyRecords: true } } },
     }),
   ["animals-list"],
@@ -25,8 +37,8 @@ export default async function AnimalsPage() {
 
   const animals = await getAnimals();
 
-  const active = animals.filter((a) => a.isActive);
-  const inactive = animals.filter((a) => !a.isActive);
+  const active = sortBySpecies(animals.filter((a) => a.isActive));
+  const inactive = sortBySpecies(animals.filter((a) => !a.isActive));
 
   return (
     <div>
@@ -72,24 +84,39 @@ export default async function AnimalsPage() {
   );
 }
 
+type AnimalRow = {
+  id: string;
+  name: string;
+  species: string;
+  breed: string | null;
+  sex: string;
+  birthDate: Date | null;
+  intakeDate: Date;
+  conditions: string | null;
+  transferDate: Date | null;
+  deathDate: Date | null;
+  _count: { dailyRecords: number };
+};
+
+function groupBySpecies(animals: AnimalRow[]) {
+  const groups: { species: string; items: AnimalRow[] }[] = [];
+  for (const animal of animals) {
+    const last = groups[groups.length - 1];
+    if (last?.species === animal.species) {
+      last.items.push(animal);
+    } else {
+      groups.push({ species: animal.species, items: [animal] });
+    }
+  }
+  return groups;
+}
+
 function AnimalTable({
   animals,
   inactive = false,
   canEdit,
 }: {
-  animals: Array<{
-    id: string;
-    name: string;
-    species: string;
-    breed: string | null;
-    sex: string;
-    birthDate: Date | null;
-    intakeDate: Date;
-    conditions: string | null;
-    transferDate: Date | null;
-    deathDate: Date | null;
-    _count: { dailyRecords: number };
-  }>;
+  animals: AnimalRow[];
   inactive?: boolean;
   canEdit: boolean;
 }) {
@@ -97,36 +124,48 @@ function AnimalTable({
     return <p className="text-gray-400 text-sm py-4">データがありません</p>;
   }
 
+  const groups = groupBySpecies(animals);
+
   return (
     <>
       {/* モバイル: カードレイアウト */}
-      <div className="md:hidden space-y-2">
-        {animals.map((animal) => (
-          <Link
-            key={animal.id}
-            href={`/animals/${animal.id}`}
-            className={`block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow ${inactive ? "opacity-60" : ""}`}
-          >
-            <div className="flex justify-between items-center">
-              <div className="font-semibold text-gray-800">
-                {animal.name}
-                {animal.deathDate && <span className="ml-1 text-gray-400 text-xs">†</span>}
-                {animal.transferDate && <span className="ml-1 text-blue-400 text-xs">→</span>}
-              </div>
-              <span className="text-green-500 text-xl font-light">›</span>
+      <div className="md:hidden space-y-1">
+        {groups.map(({ species, items }) => (
+          <div key={species}>
+            <p className="text-xs font-semibold text-gray-400 px-1 pt-3 pb-1.5 flex items-center gap-1">
+              {SPECIES_ICON[species] ?? "🐾"} {species}（{items.length}頭）
+            </p>
+            <div className="space-y-2">
+              {items.map((animal) => (
+                <Link
+                  key={animal.id}
+                  href={`/animals/${animal.id}`}
+                  className={`block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow ${inactive ? "opacity-60" : ""}`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="font-semibold text-gray-800">
+                      {animal.name}
+                      {animal.deathDate && <span className="ml-1 text-gray-400 text-xs">†</span>}
+                      {animal.transferDate && <span className="ml-1 text-blue-400 text-xs">→</span>}
+                    </div>
+                    <span className="text-green-500 text-xl font-light">›</span>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-0.5">
+                    {animal.breed && <span className="text-gray-400">{animal.breed}</span>}
+                    {animal.breed && " · "}
+                    {animal.sex === "male" ? "♂ オス" : "♀ メス"}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1.5 flex flex-wrap gap-3">
+                    <span>受入: {format(new Date(animal.intakeDate), "yyyy/MM/dd", { locale: ja })}</span>
+                    <span>記録 {animal._count.dailyRecords}件</span>
+                  </div>
+                  {animal.conditions && (
+                    <div className="text-xs text-orange-600 mt-1">持病: {animal.conditions}</div>
+                  )}
+                </Link>
+              ))}
             </div>
-            <div className="text-sm text-gray-500 mt-0.5">
-              {animal.species}{animal.breed && <span className="text-gray-400"> / {animal.breed}</span>}
-              {" · "}{animal.sex === "male" ? "♂ オス" : "♀ メス"}
-            </div>
-            <div className="text-xs text-gray-400 mt-1.5 flex flex-wrap gap-3">
-              <span>受入: {format(new Date(animal.intakeDate), "yyyy/MM/dd", { locale: ja })}</span>
-              <span>記録 {animal._count.dailyRecords}件</span>
-            </div>
-            {animal.conditions && (
-              <div className="text-xs text-orange-600 mt-1">持病: {animal.conditions}</div>
-            )}
-          </Link>
+          </div>
         ))}
       </div>
 
@@ -136,7 +175,7 @@ function AnimalTable({
           <thead className={inactive ? "bg-gray-100" : "bg-green-50"}>
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-600">名前</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">種類/品種</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">品種</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">性別</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">生年月日</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">受け入れ日</th>
@@ -146,43 +185,51 @@ function AnimalTable({
             </tr>
           </thead>
           <tbody>
-            {animals.map((animal, i) => (
-              <tr
-                key={animal.id}
-                className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-green-50 transition-colors`}
-              >
-                <td className="px-4 py-3 font-medium text-gray-800">
-                  {animal.name}
-                  {animal.deathDate && <span className="ml-1 text-gray-400 text-xs">†</span>}
-                  {animal.transferDate && <span className="ml-1 text-blue-400 text-xs">→</span>}
-                </td>
-                <td className="px-4 py-3 text-gray-600">
-                  {animal.species}
-                  {animal.breed && <span className="text-gray-400"> / {animal.breed}</span>}
-                </td>
-                <td className="px-4 py-3 text-gray-600">
-                  {animal.sex === "male" ? "♂ オス" : "♀ メス"}
-                </td>
-                <td className="px-4 py-3 text-gray-600">
-                  {animal.birthDate
-                    ? format(new Date(animal.birthDate), "yyyy/MM/dd", { locale: ja })
-                    : "-"}
-                </td>
-                <td className="px-4 py-3 text-gray-600">
-                  {format(new Date(animal.intakeDate), "yyyy/MM/dd", { locale: ja })}
-                </td>
-                <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
-                  {animal.conditions || "-"}
-                </td>
-                <td className="px-4 py-3 text-gray-500 text-center">
-                  {animal._count.dailyRecords}
-                </td>
-                <td className="px-4 py-3">
-                  <Link href={`/animals/${animal.id}`} className="text-green-600 hover:text-green-800 font-medium">
-                    詳細
-                  </Link>
-                </td>
-              </tr>
+            {groups.map(({ species, items }) => (
+              <Fragment key={species}>
+                <tr>
+                  <td colSpan={8} className="bg-gray-100 px-4 py-1.5 text-xs font-semibold text-gray-500 border-t">
+                    {SPECIES_ICON[species] ?? "🐾"} {species}（{items.length}頭）
+                  </td>
+                </tr>
+                {items.map((animal, i) => (
+                  <tr
+                    key={animal.id}
+                    className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-green-50 transition-colors`}
+                  >
+                    <td className="px-4 py-3 font-medium text-gray-800">
+                      {animal.name}
+                      {animal.deathDate && <span className="ml-1 text-gray-400 text-xs">†</span>}
+                      {animal.transferDate && <span className="ml-1 text-blue-400 text-xs">→</span>}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {animal.breed || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {animal.sex === "male" ? "♂ オス" : "♀ メス"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {animal.birthDate
+                        ? format(new Date(animal.birthDate), "yyyy/MM/dd", { locale: ja })
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {format(new Date(animal.intakeDate), "yyyy/MM/dd", { locale: ja })}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
+                      {animal.conditions || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-center">
+                      {animal._count.dailyRecords}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/animals/${animal.id}`} className="text-green-600 hover:text-green-800 font-medium">
+                        詳細
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
             ))}
           </tbody>
         </table>
