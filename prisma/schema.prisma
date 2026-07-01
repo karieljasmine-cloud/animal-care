@@ -29,8 +29,10 @@ model Animal {
   birthDate      DateTime?
   sex            String
   intakeDate     DateTime
-  conditions     String?
-  breederName    String?
+  conditions       String?
+  licenseNumber    String?
+  microchipNumber  String?
+  breederName      String?
   transferDate   DateTime?
   transferTo     String?
   deathDate      DateTime?

@@ -83,6 +83,8 @@ export default async function AnimalDetailPage(props: { params: Promise<{ id: st
           <Info label="生年月日" value={fmt(animal.birthDate)} />
           <Info label="受け入れ日" value={fmt(animal.intakeDate)} />
           <Info label="繁殖者・譲渡元" value={animal.breederName} />
+          {animal.licenseNumber && <Info label="鑑札番号" value={animal.licenseNumber} />}
+          {animal.microchipNumber && <Info label="マイクロチップ番号" value={animal.microchipNumber} />}
           <Info label="持病" value={animal.conditions} fullWidth />
           {animal.transferDate && (
             <>

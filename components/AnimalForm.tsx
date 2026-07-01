@@ -13,6 +13,8 @@ type AnimalData = {
   sex: string;
   intakeDate: Date;
   conditions: string | null;
+  licenseNumber: string | null;
+  microchipNumber: string | null;
   breederName: string | null;
   transferDate: Date | null;
   transferTo: string | null;
@@ -119,6 +121,10 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
           <Field label="繁殖者・譲渡元氏名" name="breederName" defaultValue={animal?.breederName ?? ""} />
         </div>
         <Field label="持病" name="conditions" defaultValue={animal?.conditions ?? ""} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="鑑札番号" name="licenseNumber" defaultValue={animal?.licenseNumber ?? ""} />
+          <Field label="マイクロチップ番号" name="microchipNumber" defaultValue={animal?.microchipNumber ?? ""} />
+        </div>
       </Section>
 
       <Section title="譲渡情報">

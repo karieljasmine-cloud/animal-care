@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import AnimalFilterSelect from "@/components/AnimalFilterSelect";
 import { unstable_cache } from "next/cache";
 
 const getActiveAnimals = unstable_cache(
@@ -10,7 +9,7 @@ const getActiveAnimals = unstable_cache(
     prisma.animal.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true },
+      select: { id: true, name: true, species: true },
     }),
   ["active-animals"],
   { revalidate: 60, tags: ["animals"] }
@@ -33,6 +32,13 @@ function getDailyRecords(animalId?: string) {
   )();
 }
 
+const SPECIES_ICON: Record<string, string> = {
+  犬: "🐕",
+  猫: "🐈",
+  うさぎ: "🐇",
+  その他: "🐾",
+};
+
 export default async function DailyRecordsPage({
   searchParams,
 }: {
@@ -49,7 +55,7 @@ export default async function DailyRecordsPage({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-5">
         <h1 className="text-2xl font-bold text-gray-800">
           日次記録
           {selectedAnimal && (
@@ -58,24 +64,64 @@ export default async function DailyRecordsPage({
             </span>
           )}
         </h1>
-        <div className="flex gap-2">
-          <Link
-            href="/daily-records/chart"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
-          >
-            📊 便チェック表
-          </Link>
-          <Link
-            href={animalId ? `/daily-records/new?animalId=${animalId}` : "/daily-records/new"}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"
-          >
-            ＋ 記録を追加
-          </Link>
+        <Link
+          href="/daily-records/chart"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+        >
+          📊 便チェック表
+        </Link>
+      </div>
+
+      {/* 動物グリッド — 記録登録のショートカット */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            個体を選んで記録
+          </h2>
+          {selectedAnimal && (
+            <Link href="/daily-records" className="text-xs text-green-600 hover:underline">
+              ← 全個体に戻る
+            </Link>
+          )}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {animals.map((animal) => {
+            const icon = SPECIES_ICON[animal.species] ?? "🐾";
+            const isSelected = animal.id === animalId;
+            return (
+              <div
+                key={animal.id}
+                className={`bg-white rounded-xl shadow-sm p-3 flex items-center justify-between gap-2 border-2 transition-colors ${
+                  isSelected ? "border-green-500" : "border-transparent"
+                }`}
+              >
+                <Link
+                  href={`/daily-records?animalId=${animal.id}`}
+                  className="flex items-center gap-2 min-w-0 flex-1"
+                >
+                  <span className="text-lg">{icon}</span>
+                  <span className={`text-sm font-medium truncate ${isSelected ? "text-green-700" : "text-gray-800"}`}>
+                    {animal.name}
+                  </span>
+                </Link>
+                <Link
+                  href={`/daily-records/new?animalId=${animal.id}`}
+                  className="shrink-0 bg-green-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                >
+                  ＋ 記録
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
-        <AnimalFilterSelect animals={animals} currentAnimalId={animalId} />
+      {/* 記録一覧 */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          {selectedAnimal ? `${selectedAnimal.name} の記録` : "最近の記録"}
+        </h2>
+        <span className="text-xs text-gray-400">{records.length}件</span>
       </div>
 
       <div className="space-y-3">
