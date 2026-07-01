@@ -10,8 +10,8 @@ export default async function NewMedicationPage({
 
   const animals = await prisma.animal.findMany({
     where: { isActive: true },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    orderBy: { nameKana: "asc" },
+    select: { id: true, name: true, nameKana: true, species: true },
   });
 
   return (

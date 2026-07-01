@@ -3,7 +3,10 @@
 import { createMedication, updateMedication } from "@/app/actions/medications";
 import { format } from "date-fns";
 
-type Animal = { id: string; name: string };
+const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
+const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
+
+type Animal = { id: string; name: string; nameKana: string | null; species: string };
 
 type MedicationData = {
   id: string;
@@ -38,6 +41,14 @@ export default function MedicationForm({
     ? updateMedication.bind(null, medication.id)
     : createMedication;
 
+  const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : 99; };
+  const sorted = [...animals].sort((a, b) => {
+    const dr = si(a.species) - si(b.species);
+    if (dr !== 0) return dr;
+    return (a.nameKana || a.name).localeCompare(b.nameKana || b.name, "ja");
+  });
+  const speciesGroups = [...new Set(sorted.map((a) => a.species))].sort((a, b) => si(a) - si(b));
+
   return (
     <form action={action} className="bg-white rounded-xl shadow-sm p-6 space-y-4 max-w-lg">
       <div>
@@ -50,8 +61,12 @@ export default function MedicationForm({
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-50"
         >
           <option value="">選択してください</option>
-          {animals.map((a) => (
-            <option key={a.id} value={a.id}>{a.name}</option>
+          {speciesGroups.map((sp) => (
+            <optgroup key={sp} label={`${SPECIES_ICON[sp] ?? "🐾"} ${sp}`}>
+              {sorted.filter((a) => a.species === sp).map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>

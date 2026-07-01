@@ -23,7 +23,7 @@ const EVENT_TYPE_CONFIG = {
   adHocMed: { label: "突発的なお薬", color: "bg-purple-100 text-purple-800", dotColor: "bg-purple-500", icon: "💊" },
   care: { label: "ケア", color: "bg-blue-100 text-blue-800", dotColor: "bg-blue-500", icon: "✂️" },
   injury: { label: "怪我・異常", color: "bg-red-100 text-red-800", dotColor: "bg-red-500", icon: "🩹" },
-  inHeat: { label: "発情", color: "bg-pink-100 text-pink-800", dotColor: "bg-pink-500", icon: "🌸" },
+  inHeat: { label: "ヒート", color: "bg-pink-100 text-pink-800", dotColor: "bg-pink-500", icon: "🌸" },
 } as const;
 
 type EventType = keyof typeof EVENT_TYPE_CONFIG;
@@ -75,8 +75,8 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
         }),
         prisma.animal.findMany({
           where: { isActive: true, ...(species ? { species } : {}) },
-          select: { id: true, name: true },
-          orderBy: { name: "asc" },
+          select: { id: true, name: true, nameKana: true, species: true },
+          orderBy: { nameKana: "asc" },
         }),
         fetchDailyRecords && drOrConditions.length > 0
           ? prisma.dailyRecord.findMany({
@@ -172,7 +172,7 @@ export default async function EventsCalendarPage({
         id: `dr-inHeat-${dr.id}`,
         eventDate: dr.recordDate,
         eventType: "inHeat",
-        title: "発情",
+        title: "ヒート",
         notes: null,
         animal: dr.animal,
         isFromDailyRecord: true,
@@ -223,7 +223,7 @@ export default async function EventsCalendarPage({
     { value: "adHocMed", label: "💊 突発的なお薬", href: buildUrl(monthStr, "adHocMed", animalIdFilter, speciesFilter) },
     { value: "care", label: "✂️ ケア", href: buildUrl(monthStr, "care", animalIdFilter, speciesFilter) },
     { value: "injury", label: "🩹 怪我・異常", href: buildUrl(monthStr, "injury", animalIdFilter, speciesFilter) },
-    { value: "inHeat", label: "🌸 発情", href: buildUrl(monthStr, "inHeat", animalIdFilter, speciesFilter) },
+    { value: "inHeat", label: "🌸 ヒート", href: buildUrl(monthStr, "inHeat", animalIdFilter, speciesFilter) },
   ];
 
   return (

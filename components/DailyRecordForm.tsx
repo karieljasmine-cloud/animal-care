@@ -200,7 +200,7 @@ export default function DailyRecordForm({
             { name: "trimming", label: "トリミング", checked: record?.trimming },
             { name: "shampoo", label: "シャンプー", checked: record?.shampoo },
             { name: "earCleaning", label: "耳掃除", checked: record?.earCleaning },
-            { name: "inHeat", label: "発情", checked: record?.inHeat },
+            { name: "inHeat", label: "ヒート", checked: record?.inHeat },
           ].map((item) => (
             <label key={item.name} className="flex items-center gap-2 cursor-pointer">
               <input

@@ -183,7 +183,7 @@ export default async function DailyRecordsPage({
                 {record.trimming && <Tag>トリミング</Tag>}
                 {record.shampoo && <Tag>シャンプー</Tag>}
                 {record.earCleaning && <Tag>耳掃除</Tag>}
-                {record.inHeat && <Tag color="pink">発情</Tag>}
+                {record.inHeat && <Tag color="pink">ヒート</Tag>}
               </div>
 
               {record.injury && (

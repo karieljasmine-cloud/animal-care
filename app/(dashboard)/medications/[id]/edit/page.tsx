@@ -16,8 +16,8 @@ export default async function EditMedicationPage(props: { params: Promise<{ id: 
     }),
     prisma.animal.findMany({
       where: { isActive: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
+      orderBy: { nameKana: "asc" },
+      select: { id: true, name: true, nameKana: true, species: true },
     }),
   ]);
 

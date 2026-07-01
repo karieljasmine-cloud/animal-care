@@ -6,7 +6,7 @@ const EVENT_TYPE_CONFIG = {
   adHocMed: { color: "bg-purple-100 text-purple-800", icon: "💊", label: "突発的なお薬" },
   care: { color: "bg-blue-100 text-blue-800", icon: "✂️", label: "ケア" },
   injury: { color: "bg-red-100 text-red-800", icon: "🩹", label: "怪我・異常" },
-  inHeat: { color: "bg-pink-100 text-pink-800", icon: "🌸", label: "発情" },
+  inHeat: { color: "bg-pink-100 text-pink-800", icon: "🌸", label: "ヒート" },
 } as const;
 
 type EventType = keyof typeof EVENT_TYPE_CONFIG;

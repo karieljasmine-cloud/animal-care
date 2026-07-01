@@ -3,12 +3,22 @@ import { createAnimalEvent } from "@/app/actions/events";
 import Link from "next/link";
 import { format } from "date-fns";
 
+const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
+const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
+
 export default async function NewEventPage() {
-  const animals = await prisma.animal.findMany({
+  const rawAnimals = await prisma.animal.findMany({
     where: { isActive: true },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
+    select: { id: true, name: true, nameKana: true, species: true },
   });
+
+  const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : 99; };
+  const animals = [...rawAnimals].sort((a, b) => {
+    const dr = si(a.species) - si(b.species);
+    if (dr !== 0) return dr;
+    return (a.nameKana || a.name).localeCompare(b.nameKana || b.name, "ja");
+  });
+  const speciesGroups = [...new Set(animals.map((a) => a.species))].sort((a, b) => si(a) - si(b));
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
@@ -33,10 +43,12 @@ export default async function NewEventPage() {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option value="">選択してください</option>
-            {animals.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
+            {speciesGroups.map((sp) => (
+              <optgroup key={sp} label={`${SPECIES_ICON[sp] ?? "🐾"} ${sp}`}>
+                {animals.filter((a) => a.species === sp).map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
@@ -60,11 +72,12 @@ export default async function NewEventPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             種別 <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { value: "adHocMed", label: "💊 突発的なお薬", desc: "下痢薬・整腸剤など" },
               { value: "care", label: "✂️ ケア", desc: "トリミング・特別ケアなど" },
               { value: "injury", label: "🩹 怪我・異常", desc: "傷・体調異常など" },
+              { value: "inHeat", label: "🌸 ヒート", desc: "発情期間" },
             ].map(({ value, label, desc }) => (
               <label key={value} className="relative cursor-pointer">
                 <input
@@ -92,7 +105,7 @@ export default async function NewEventPage() {
             type="text"
             name="title"
             required
-            placeholder="例：下痢薬（整腸錠）投与、爪切り、右前脚に軽い擦り傷"
+            placeholder="例：下痢薬（整腸錠）投与、爪切り、右前脚に軽い擦り傷、ヒート開始"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
