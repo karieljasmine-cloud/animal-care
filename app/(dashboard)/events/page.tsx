@@ -23,6 +23,7 @@ const EVENT_TYPE_CONFIG = {
   adHocMed: { label: "突発的なお薬", color: "bg-purple-100 text-purple-800", dotColor: "bg-purple-500", icon: "💊" },
   care: { label: "ケア", color: "bg-blue-100 text-blue-800", dotColor: "bg-blue-500", icon: "✂️" },
   injury: { label: "怪我・異常", color: "bg-red-100 text-red-800", dotColor: "bg-red-500", icon: "🩹" },
+  inHeat: { label: "発情", color: "bg-pink-100 text-pink-800", dotColor: "bg-pink-500", icon: "🌸" },
 } as const;
 
 type EventType = keyof typeof EVENT_TYPE_CONFIG;
@@ -46,7 +47,8 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
 
       const fetchDrCare = !type || type === "care";
       const fetchDrInjury = !type || type === "injury";
-      const fetchDailyRecords = fetchDrCare || fetchDrInjury;
+      const fetchDrInHeat = !type || type === "inHeat";
+      const fetchDailyRecords = fetchDrCare || fetchDrInjury || fetchDrInHeat;
 
       const drOrConditions = [
         ...(fetchDrCare ? [
@@ -54,8 +56,10 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
           { nailTrimming: true as const },
           { trimming: true as const },
           { shampoo: true as const },
+          { earCleaning: true as const },
         ] : []),
         ...(fetchDrInjury ? [{ injury: { not: null } }] : []),
+        ...(fetchDrInHeat ? [{ inHeat: true as const }] : []),
       ];
 
       const [events, animals, dailyRecords] = await Promise.all([
@@ -89,6 +93,8 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
                 nailTrimming: true,
                 trimming: true,
                 shampoo: true,
+                earCleaning: true,
+                inHeat: true,
                 injury: true,
                 animalId: true,
                 animal: { select: { id: true, name: true } },
@@ -137,6 +143,7 @@ export default async function EventsCalendarPage({
     if (dr.nailTrimming) careItems.push("爪切り");
     if (dr.trimming) careItems.push("トリミング");
     if (dr.shampoo) careItems.push("シャンプー");
+    if (dr.earCleaning) careItems.push("耳掃除");
 
     if (careItems.length > 0) {
       drEvents.push({
@@ -155,6 +162,17 @@ export default async function EventsCalendarPage({
         eventDate: dr.recordDate,
         eventType: "injury",
         title: dr.injury,
+        notes: null,
+        animal: dr.animal,
+        isFromDailyRecord: true,
+      });
+    }
+    if (dr.inHeat) {
+      drEvents.push({
+        id: `dr-inHeat-${dr.id}`,
+        eventDate: dr.recordDate,
+        eventType: "inHeat",
+        title: "発情",
         notes: null,
         animal: dr.animal,
         isFromDailyRecord: true,
@@ -205,6 +223,7 @@ export default async function EventsCalendarPage({
     { value: "adHocMed", label: "💊 突発的なお薬", href: buildUrl(monthStr, "adHocMed", animalIdFilter, speciesFilter) },
     { value: "care", label: "✂️ ケア", href: buildUrl(monthStr, "care", animalIdFilter, speciesFilter) },
     { value: "injury", label: "🩹 怪我・異常", href: buildUrl(monthStr, "injury", animalIdFilter, speciesFilter) },
+    { value: "inHeat", label: "🌸 発情", href: buildUrl(monthStr, "inHeat", animalIdFilter, speciesFilter) },
   ];
 
   return (
@@ -232,21 +251,21 @@ export default async function EventsCalendarPage({
 
       {/* Month navigation + Animal selector */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <div className="flex items-center justify-between bg-white rounded-lg shadow-sm px-4 py-2 flex-1">
+        <div className="flex items-stretch bg-white rounded-lg shadow-sm overflow-hidden flex-1">
           <Link
             href={buildUrl(prevMonth, typeFilter, animalIdFilter, speciesFilter)}
-            className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+            className="flex-1 flex items-center gap-1 py-3 px-4 text-sm text-gray-600 hover:text-green-600 font-medium hover:bg-green-50 transition-colors"
           >
             ← 前の月
           </Link>
-          <div className="text-center">
+          <div className="text-center py-2 px-3 border-x border-gray-100 shrink-0">
             <div className="font-semibold text-gray-700">
               {format(currentDate, "yyyy年M月", { locale: ja })}
             </div>
           </div>
           <Link
             href={buildUrl(nextMonth, typeFilter, animalIdFilter, speciesFilter)}
-            className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+            className="flex-1 flex items-center justify-end gap-1 py-3 px-4 text-sm text-gray-600 hover:text-green-600 font-medium hover:bg-green-50 transition-colors"
           >
             次の月 →
           </Link>

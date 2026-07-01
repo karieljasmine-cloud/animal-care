@@ -105,26 +105,26 @@ export default async function StoolChartPage({
       </div>
 
       {/* 週ナビゲーション */}
-      <div className="flex items-center justify-between mb-4 bg-white rounded-lg shadow-sm px-4 py-2">
+      <div className="flex items-stretch mb-4 bg-white rounded-lg shadow-sm overflow-hidden">
         <Link
           href={weekUrl(weekOffset + 1)}
-          className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+          className="flex-1 flex items-center gap-1 py-3 px-4 text-sm text-gray-600 hover:text-green-600 font-medium hover:bg-green-50 transition-colors"
         >
           ← 前の週
         </Link>
-        <div className="text-center">
+        <div className="text-center py-2 px-3 border-x border-gray-100 shrink-0">
           <div className="text-sm font-semibold text-gray-700">{weekLabel(weekOffset)}</div>
           <div className="text-xs text-gray-400">{startLabel} 〜 {endLabel}</div>
         </div>
         {weekOffset > 0 ? (
           <Link
             href={weekUrl(weekOffset - 1)}
-            className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+            className="flex-1 flex items-center justify-end gap-1 py-3 px-4 text-sm text-gray-600 hover:text-green-600 font-medium hover:bg-green-50 transition-colors"
           >
             次の週 →
           </Link>
         ) : (
-          <span className="text-sm text-gray-300 px-3 py-1.5">次の週 →</span>
+          <span className="flex-1 flex items-center justify-end gap-1 py-3 px-4 text-sm text-gray-300">次の週 →</span>
         )}
       </div>
 

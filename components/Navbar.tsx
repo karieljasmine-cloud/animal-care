@@ -18,15 +18,21 @@ export default function Navbar({ userName, userRole }: { userName: string; userR
     staff: "スタッフ",
   };
 
-  const navItems = [
+  const navItems: { href: string; label: string; icon: string; exact?: boolean }[] = [
     ...(canSeeAnimals ? [{ href: "/animals", label: "個体台帳", icon: "🐾" }] : []),
-    { href: "/daily-records", label: "日次記録", icon: "📋" },
+    { href: "/daily-records", label: "日次記録", icon: "📋", exact: true },
+    { href: "/daily-records/chart", label: "便チェック表", icon: "🚽" },
     { href: "/medications/chart", label: "投薬記録", icon: "💊" },
     { href: "/events", label: "特記事項", icon: "📅" },
     ...(canSeeAnimals ? [{ href: "/cat-toilet", label: "猫トイレ", icon: "🐈" }] : []),
     ...(isAdmin ? [{ href: "/staff", label: "スタッフ管理", icon: "👥" }] : []),
     ...(isAdmin ? [{ href: "/admin/audit-log", label: "操作履歴", icon: "📜" }] : []),
   ];
+
+  function isActive(item: { href: string; exact?: boolean }) {
+    if (item.exact) return pathname === item.href || pathname.startsWith(item.href + "/new") || (pathname.startsWith(item.href + "/") && !pathname.startsWith(item.href + "/chart"));
+    return isActive(item);
+  }
 
   return (
     <nav className="bg-green-700 text-white shadow-md">
@@ -45,7 +51,7 @@ export default function Navbar({ userName, userRole }: { userName: string; userR
                   key={item.href}
                   href={item.href}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    pathname.startsWith(item.href)
+                    isActive(item)
                       ? "bg-green-900 text-white"
                       : "hover:bg-green-600 text-green-100"
                   }`}
@@ -93,7 +99,7 @@ export default function Navbar({ userName, userRole }: { userName: string; userR
               href={item.href}
               onClick={() => setMenuOpen(false)}
               className={`px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                pathname.startsWith(item.href)
+                isActive(item)
                   ? "bg-green-900 text-white"
                   : "hover:bg-green-600 text-green-100"
               }`}

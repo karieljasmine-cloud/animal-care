@@ -24,6 +24,7 @@ function getMedicationChartData(fromDateStr: string) {
         orderBy: [{ animal: { name: "asc" } }, { medicineName: "asc" }],
         select: {
           id: true, medicineName: true, dosage: true, frequency: true,
+          startDate: true, endDate: true,
           remainingDoses: true, openedAt: true, expiresAfterDays: true, notes: true,
           animal: { select: { id: true, name: true, nameKana: true, species: true } },
           logs: {
@@ -99,26 +100,26 @@ export default async function MedicationChartPage({
       </div>
 
       {/* 週ナビゲーション */}
-      <div className="flex items-center justify-between mb-4 bg-white rounded-lg shadow-sm px-4 py-2">
+      <div className="flex items-stretch mb-4 bg-white rounded-lg shadow-sm overflow-hidden">
         <Link
           href={`/medications/chart?week=${weekOffset + 1}`}
-          className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+          className="flex-1 flex items-center gap-1 py-3 px-4 text-sm text-gray-600 hover:text-green-600 font-medium hover:bg-green-50 transition-colors"
         >
           ← 前の週
         </Link>
-        <div className="text-center">
+        <div className="text-center py-2 px-3 border-x border-gray-100 shrink-0">
           <div className="text-sm font-semibold text-gray-700">{weekLabel(weekOffset)}</div>
           <div className="text-xs text-gray-400">{startLabel} 〜 {endLabel}</div>
         </div>
         {weekOffset > 0 ? (
           <Link
             href={`/medications/chart?week=${weekOffset - 1}`}
-            className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
+            className="flex-1 flex items-center justify-end gap-1 py-3 px-4 text-sm text-gray-600 hover:text-green-600 font-medium hover:bg-green-50 transition-colors"
           >
             次の週 →
           </Link>
         ) : (
-          <span className="text-sm text-gray-300 px-3 py-1.5">次の週 →</span>
+          <span className="flex-1 flex items-center justify-end gap-1 py-3 px-4 text-sm text-gray-300">次の週 →</span>
         )}
       </div>
 
@@ -142,113 +143,133 @@ export default async function MedicationChartPage({
           現在投薬中の個体はいません
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
-          <table className="text-sm border-collapse min-w-max">
-            <thead>
-              <tr>
-                <th className="sticky left-0 z-10 bg-green-50 px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[72px] sm:min-w-[100px]">
-                  個体
-                </th>
-                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]">
-                  薬品名 / 用量・頻度
-                </th>
-                {dates.map((d) => (
-                  <th
-                    key={d.toISOString()}
-                    colSpan={2}
-                    className="px-2 py-2 text-center font-medium text-gray-600 border-b border-r"
-                  >
-                    <div className="text-xs text-gray-400">{format(d, "M/d", { locale: ja })}</div>
-                    <div className="text-xs">{format(d, "(E)", { locale: ja })}</div>
-                  </th>
-                ))}
-              </tr>
-              <tr>
-                <th className="sticky left-0 z-10 bg-green-50 border-b border-r min-w-[72px] sm:min-w-[100px]"></th>
-                <th className="sticky left-[72px] sm:left-[100px] z-10 bg-green-50 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]"></th>
-                {dates.map((d) =>
-                  times.map((t) => (
-                    <th
-                      key={`${d.toISOString()}_${t}`}
-                      className={`px-1 py-1 text-center text-xs font-medium border-b border-r w-14 sm:w-16 ${
-                        t === "AM" ? "text-orange-400" : "text-indigo-400"
-                      }`}
-                    >
-                      {t === "AM" ? "☀朝" : "★夜"}
-                    </th>
-                  ))
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {medications.map((med, i) => {
-                const isLow = med.remainingDoses !== null && med.remainingDoses <= 3;
-                const isFirstOfSpecies = i === 0 || medications[i - 1].animal.species !== med.animal.species;
-                return (
-                  <tr key={med.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="sticky left-0 z-10 bg-inherit px-2 sm:px-4 py-2 font-medium text-gray-800 border-b border-r text-xs sm:text-sm">
-                      {isFirstOfSpecies && (
-                        <div className="text-xs text-gray-400 font-normal -mt-0.5 mb-0.5">
-                          {SPECIES_ICON[med.animal.species] ?? "🐾"} {med.animal.species}
-                        </div>
-                      )}
-                      {med.animal.name}
-                    </td>
-                    <td className="sticky left-[72px] sm:left-[100px] z-10 bg-inherit px-2 sm:px-4 py-2 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]">
-                      <div className="font-medium text-gray-800 text-xs sm:text-sm">{med.medicineName}</div>
-                      {(med.dosage || med.frequency) && (
-                        <div className="text-xs text-gray-400">
-                          {[med.dosage, med.frequency].filter(Boolean).join(" · ")}
-                        </div>
-                      )}
-                      {med.remainingDoses !== null && (
-                        <div className={`text-xs mt-0.5 font-semibold ${isLow ? "text-red-500" : "text-gray-400"}`}>
-                          残量: {med.remainingDoses}回{isLow && " ⚠️"}
-                        </div>
-                      )}
-                      {med.notes && (
-                        <div className="text-xs text-gray-500 mt-0.5 italic overflow-hidden" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{med.notes}</div>
-                      )}
-                      {med.openedAt && med.expiresAfterDays && (() => {
-                        const expiryDate = addDays(new Date(med.openedAt!), med.expiresAfterDays!);
-                        const daysLeft = differenceInDays(expiryDate, today);
+        <>
+          {[
+            { label: "定期投薬", items: medications.filter((m) => !m.endDate), headerColor: "bg-green-50" },
+            { label: "一時的な投薬（期間指定）", items: medications.filter((m) => !!m.endDate), headerColor: "bg-orange-50" },
+          ].map(({ label, items, headerColor }) =>
+            items.length === 0 ? null : (
+              <div key={label} className="mb-4">
+                <h2 className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded text-xs ${headerColor}`}>{label}</span>
+                  <span className="text-gray-400 font-normal">{items.length}件</span>
+                </h2>
+                <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+                  <table className="text-sm border-collapse min-w-max">
+                    <thead>
+                      <tr>
+                        <th className={`sticky left-0 z-10 ${headerColor} px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[72px] sm:min-w-[100px]`}>
+                          個体
+                        </th>
+                        <th className={`sticky left-[72px] sm:left-[100px] z-10 ${headerColor} px-2 sm:px-4 py-2 text-left font-medium text-gray-600 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]`}>
+                          薬品名 / 用量・頻度
+                        </th>
+                        {dates.map((d) => (
+                          <th
+                            key={d.toISOString()}
+                            colSpan={2}
+                            className="px-2 py-2 text-center font-medium text-gray-600 border-b border-r"
+                          >
+                            <div className="text-xs text-gray-400">{format(d, "M/d", { locale: ja })}</div>
+                            <div className="text-xs">{format(d, "(E)", { locale: ja })}</div>
+                          </th>
+                        ))}
+                      </tr>
+                      <tr>
+                        <th className={`sticky left-0 z-10 ${headerColor} border-b border-r min-w-[72px] sm:min-w-[100px]`}></th>
+                        <th className={`sticky left-[72px] sm:left-[100px] z-10 ${headerColor} border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]`}></th>
+                        {dates.map((d) =>
+                          times.map((t) => (
+                            <th
+                              key={`${d.toISOString()}_${t}`}
+                              className={`px-1 py-1 text-center text-xs font-medium border-b border-r w-14 sm:w-16 ${
+                                t === "AM" ? "text-orange-400" : "text-indigo-400"
+                              }`}
+                            >
+                              {t === "AM" ? "☀朝" : "★夜"}
+                            </th>
+                          ))
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((med, i) => {
+                        const isLow = med.remainingDoses !== null && med.remainingDoses <= 3;
+                        const isFirstOfSpecies = i === 0 || items[i - 1].animal.species !== med.animal.species;
                         return (
-                          <div className={`text-xs mt-0.5 font-semibold ${daysLeft < 0 ? "text-red-500" : daysLeft <= 7 ? "text-orange-500" : "text-blue-500"}`}>
-                            {daysLeft < 0 ? `期限切れ ${Math.abs(daysLeft)}日前 ⚠️` : `開封後残${daysLeft}日`}
-                          </div>
-                        );
-                      })()}
-                    </td>
-                    {dates.map((d) =>
-                      times.map((t) => {
-                        const dateStr = format(d, "yyyy-MM-dd");
-                        const key = `${med.id}_${dateStr}_${t}`;
-                        const logInfo = logMap.get(key);
-                        const given = !!logInfo;
-                        const isFuture = d > today;
-                        return (
-                          <td key={key} className="px-0.5 py-1.5 text-center border-b border-r">
-                            {isFuture ? (
-                              <span className="w-10 h-10 flex items-center justify-center mx-auto text-gray-200 text-xs">—</span>
-                            ) : (
-                              <ToggleLogButton
-                                medicationId={med.id}
-                                logDate={`${dateStr}T00:00:00`}
-                                timeOfDay={t}
-                                initialGiven={given}
-                                staffName={logInfo?.staffName ?? null}
-                              />
+                          <tr key={med.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <td className="sticky left-0 z-10 bg-inherit px-2 sm:px-4 py-2 font-medium text-gray-800 border-b border-r text-xs sm:text-sm">
+                              {isFirstOfSpecies && (
+                                <div className="text-xs text-gray-400 font-normal -mt-0.5 mb-0.5">
+                                  {SPECIES_ICON[med.animal.species] ?? "🐾"} {med.animal.species}
+                                </div>
+                              )}
+                              {med.animal.name}
+                            </td>
+                            <td className="sticky left-[72px] sm:left-[100px] z-10 bg-inherit px-2 sm:px-4 py-2 border-b border-r min-w-[140px] sm:min-w-[180px] max-w-[140px] sm:max-w-[180px]">
+                              <div className="font-medium text-gray-800 text-xs sm:text-sm">{med.medicineName}</div>
+                              {(med.dosage || med.frequency) && (
+                                <div className="text-xs text-gray-400">
+                                  {[med.dosage, med.frequency].filter(Boolean).join(" · ")}
+                                </div>
+                              )}
+                              {med.endDate && (
+                                <div className="text-xs text-orange-600 mt-0.5">
+                                  {format(new Date(med.startDate), "M/d", { locale: ja })} 〜 {format(new Date(med.endDate), "M/d", { locale: ja })}
+                                </div>
+                              )}
+                              {med.remainingDoses !== null && (
+                                <div className={`text-xs mt-0.5 font-semibold ${isLow ? "text-red-500" : "text-gray-400"}`}>
+                                  残量: {med.remainingDoses}回{isLow && " ⚠️"}
+                                </div>
+                              )}
+                              {med.notes && (
+                                <div className="text-xs text-gray-500 mt-0.5 italic overflow-hidden" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{med.notes}</div>
+                              )}
+                              {med.openedAt && med.expiresAfterDays && (() => {
+                                const expiryDate = addDays(new Date(med.openedAt!), med.expiresAfterDays!);
+                                const daysLeft = differenceInDays(expiryDate, today);
+                                return (
+                                  <div className={`text-xs mt-0.5 font-semibold ${daysLeft < 0 ? "text-red-500" : daysLeft <= 7 ? "text-orange-500" : "text-blue-500"}`}>
+                                    {daysLeft < 0 ? `期限切れ ${Math.abs(daysLeft)}日前 ⚠️` : `開封後残${daysLeft}日`}
+                                  </div>
+                                );
+                              })()}
+                            </td>
+                            {dates.map((d) =>
+                              times.map((t) => {
+                                const dateStr = format(d, "yyyy-MM-dd");
+                                const key = `${med.id}_${dateStr}_${t}`;
+                                const logInfo = logMap.get(key);
+                                const given = !!logInfo;
+                                const isFuture = d > today;
+                                return (
+                                  <td key={key} className="px-0.5 py-1.5 text-center border-b border-r">
+                                    {isFuture ? (
+                                      <span className="w-10 h-10 flex items-center justify-center mx-auto text-gray-200 text-xs">—</span>
+                                    ) : (
+                                      <ToggleLogButton
+                                        medicationId={med.id}
+                                        logDate={`${dateStr}T00:00:00`}
+                                        timeOfDay={t}
+                                        initialGiven={given}
+                                        staffName={logInfo?.staffName ?? null}
+                                      />
+                                    )}
+                                  </td>
+                                );
+                              })
                             )}
-                          </td>
+                          </tr>
                         );
-                      })
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          )}
+        </>
       )}
 
       <p className="mt-3 text-xs text-gray-400">

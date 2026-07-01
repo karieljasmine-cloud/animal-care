@@ -68,6 +68,7 @@ model DailyRecord {
   nailTrimming   Boolean  @default(false)
   trimming       Boolean  @default(false)
   shampoo        Boolean  @default(false)
+  earCleaning    Boolean  @default(false)
   inHeat         Boolean  @default(false)
   injury         String?
   injuryPhotoUrl String?
