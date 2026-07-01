@@ -7,15 +7,17 @@ type Props = {
   currentAnimalId: string;
   currentMonth: string;
   currentType: string;
+  currentSpecies?: string;
 };
 
-export default function AnimalSelectorClient({ animals, currentAnimalId, currentMonth, currentType }: Props) {
+export default function AnimalSelectorClient({ animals, currentAnimalId, currentMonth, currentType, currentSpecies }: Props) {
   const router = useRouter();
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const params = new URLSearchParams();
     if (currentMonth) params.set("month", currentMonth);
     if (currentType) params.set("type", currentType);
+    if (currentSpecies) params.set("species", currentSpecies);
     if (e.target.value) params.set("animalId", e.target.value);
     router.push(`/events?${params.toString()}`);
   }

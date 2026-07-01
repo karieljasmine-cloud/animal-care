@@ -26,7 +26,7 @@ const EVENT_TYPE_CONFIG = {
 
 type EventType = keyof typeof EVENT_TYPE_CONFIG;
 
-function getCalendarData(monthStr: string, animalId: string, type: string) {
+function getCalendarData(monthStr: string, animalId: string, type: string, species: string) {
   return unstable_cache(
     async () => {
       const [year, month] = monthStr.split("-").map(Number);
@@ -39,12 +39,13 @@ function getCalendarData(monthStr: string, animalId: string, type: string) {
             eventDate: { gte: start, lte: end },
             ...(animalId ? { animalId } : {}),
             ...(type ? { eventType: type } : {}),
+            ...(species ? { animal: { species } } : {}),
           },
           include: { animal: { select: { id: true, name: true } } },
           orderBy: { eventDate: "asc" },
         }),
         prisma.animal.findMany({
-          where: { isActive: true },
+          where: { isActive: true, ...(species ? { species } : {}) },
           select: { id: true, name: true },
           orderBy: { name: "asc" },
         }),
@@ -52,16 +53,17 @@ function getCalendarData(monthStr: string, animalId: string, type: string) {
 
       return { events, animals };
     },
-    ["animal-events-calendar", monthStr, animalId || "all", type || "all"],
+    ["animal-events-calendar", monthStr, animalId || "all", type || "all", species || "all"],
     { revalidate: 30, tags: ["animal-events", "animals"] }
   )();
 }
 
-function buildUrl(month: string, type: string, animalId: string) {
+function buildUrl(month: string, type: string, animalId: string, species: string) {
   const p = new URLSearchParams();
   if (month) p.set("month", month);
   if (type) p.set("type", type);
   if (animalId) p.set("animalId", animalId);
+  if (species) p.set("species", species);
   return `/events?${p.toString()}`;
 }
 
@@ -70,14 +72,15 @@ const DOW = ["日", "月", "火", "水", "木", "金", "土"];
 export default async function EventsCalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; type?: string; animalId?: string }>;
+  searchParams: Promise<{ month?: string; type?: string; animalId?: string; species?: string }>;
 }) {
   const sp = await searchParams;
   const monthStr = sp.month ?? format(new Date(), "yyyy-MM");
   const typeFilter = sp.type ?? "";
   const animalIdFilter = sp.animalId ?? "";
+  const speciesFilter = sp.species ?? "";
 
-  const { events, animals } = await getCalendarData(monthStr, animalIdFilter, typeFilter);
+  const { events, animals } = await getCalendarData(monthStr, animalIdFilter, typeFilter, speciesFilter);
 
   const [year, month] = monthStr.split("-").map(Number);
   const currentDate = new Date(year, month - 1);
@@ -90,13 +93,18 @@ export default async function EventsCalendarPage({
   const prevMonth = format(subMonths(currentDate, 1), "yyyy-MM");
   const nextMonth = format(addMonths(currentDate, 1), "yyyy-MM");
 
-  // Group events by date key
   const eventsByDate = new Map<string, typeof events>();
   for (const ev of events) {
     const key = format(new Date(ev.eventDate), "yyyy-MM-dd");
     if (!eventsByDate.has(key)) eventsByDate.set(key, []);
     eventsByDate.get(key)!.push(ev);
   }
+
+  const speciesTabs = [
+    { value: "", label: "全体" },
+    { value: "犬", label: "🐕 犬" },
+    { value: "猫", label: "🐈 猫" },
+  ];
 
   const filterTabs = [
     { value: "", label: "全種別" },
@@ -118,12 +126,29 @@ export default async function EventsCalendarPage({
         </Link>
       </div>
 
+      {/* Species tabs */}
+      <div className="flex gap-2 mb-2 flex-wrap">
+        {speciesTabs.map(({ value, label }) => (
+          <Link
+            key={value}
+            href={buildUrl(monthStr, typeFilter, "", value)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              speciesFilter === value
+                ? "bg-gray-700 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
+
       {/* Type filter tabs */}
       <div className="flex gap-2 mb-3 flex-wrap">
         {filterTabs.map(({ value, label }) => (
           <Link
             key={value}
-            href={buildUrl(monthStr, value, animalIdFilter)}
+            href={buildUrl(monthStr, value, animalIdFilter, speciesFilter)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               typeFilter === value
                 ? "bg-green-600 text-white"
@@ -139,7 +164,7 @@ export default async function EventsCalendarPage({
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <div className="flex items-center justify-between bg-white rounded-lg shadow-sm px-4 py-2 flex-1">
           <Link
-            href={buildUrl(prevMonth, typeFilter, animalIdFilter)}
+            href={buildUrl(prevMonth, typeFilter, animalIdFilter, speciesFilter)}
             className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
           >
             ← 前の月
@@ -150,7 +175,7 @@ export default async function EventsCalendarPage({
             </div>
           </div>
           <Link
-            href={buildUrl(nextMonth, typeFilter, animalIdFilter)}
+            href={buildUrl(nextMonth, typeFilter, animalIdFilter, speciesFilter)}
             className="text-sm text-gray-600 hover:text-green-600 font-medium px-3 py-1.5 rounded hover:bg-green-50 transition-colors"
           >
             次の月 →
@@ -162,6 +187,7 @@ export default async function EventsCalendarPage({
             currentAnimalId={animalIdFilter}
             currentMonth={monthStr}
             currentType={typeFilter}
+            currentSpecies={speciesFilter}
           />
         </div>
       </div>
