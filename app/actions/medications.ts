@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { createAuditLog } from "@/lib/audit";
 
 export async function createMedication(formData: FormData) {
   const session = await auth();
@@ -73,7 +74,17 @@ export async function deleteMedication(id: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
 
+  const med = await prisma.medication.findUnique({
+    where: { id },
+    include: { animal: { select: { name: true } } },
+  });
+
   await prisma.medication.delete({ where: { id } });
+
+  if (med) {
+    const user = session.user as { id: string; name?: string };
+    await createAuditLog(user.id, user.name ?? "不明", "投薬記録 削除", `${med.animal.name}「${med.medicineName}」`);
+  }
 
   updateTag("medications");
   revalidatePath("/medications");
@@ -87,12 +98,23 @@ export async function toggleMedicationLog(formData: FormData) {
   const timeOfDay = formData.get("timeOfDay") as string;
   const existing = formData.get("existing") as string;
 
+  const med = await prisma.medication.findUnique({
+    where: { id: medicationId },
+    include: { animal: { select: { name: true } } },
+  });
+  const dateLabel = logDate.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
+  const timeLabel = timeOfDay === "AM" ? "朝" : "夜";
+
   if (existing === "true") {
     await prisma.medicationLog.deleteMany({ where: { medicationId, logDate, timeOfDay } });
     await prisma.medication.updateMany({
       where: { id: medicationId, remainingDoses: { gt: 0 } },
       data: { remainingDoses: { increment: 1 } },
     });
+    if (sId && med) {
+      const staffUser = await prisma.user.findUnique({ where: { id: sId }, select: { name: true } });
+      await createAuditLog(sId, staffUser?.name ?? "不明", "投薬ログ 取消", `${med.animal.name}「${med.medicineName}」${dateLabel}${timeLabel}`);
+    }
   } else {
     await prisma.medicationLog.create({
       data: { medicationId, logDate, timeOfDay, staffId: sId ?? null },
@@ -101,6 +123,10 @@ export async function toggleMedicationLog(formData: FormData) {
       where: { id: medicationId, remainingDoses: { gt: 0 } },
       data: { remainingDoses: { decrement: 1 } },
     });
+    if (sId && med) {
+      const staffUser = await prisma.user.findUnique({ where: { id: sId }, select: { name: true } });
+      await createAuditLog(sId, staffUser?.name ?? "不明", "投薬ログ 記録", `${med.animal.name}「${med.medicineName}」${dateLabel}${timeLabel}`);
+    }
   }
   updateTag("medications");
   revalidatePath("/medications/chart");

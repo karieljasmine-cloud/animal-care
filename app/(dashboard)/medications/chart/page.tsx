@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { format, subDays, startOfDay, addDays, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -45,8 +46,9 @@ export default async function MedicationChartPage({
 }: {
   searchParams: Promise<{ week?: string }>;
 }) {
-  const sp = await searchParams;
+  const [sp, session] = await Promise.all([searchParams, auth()]);
   const weekOffset = Math.max(0, parseInt(sp.week ?? "0") || 0);
+  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   const today = startOfDay(new Date());
   const anchor = subDays(today, weekOffset * 7);
@@ -70,11 +72,18 @@ export default async function MedicationChartPage({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold text-gray-800">投薬チェック表</h1>
-        <Link href="/medications" className="text-sm text-green-600 hover:underline">
-          ← 投薬記録一覧へ
-        </Link>
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/medications" className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200">
+            📋 投薬一覧
+          </Link>
+          {isAdmin && (
+            <Link href="/medications/new" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
+              ＋ 投薬を追加
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* 週ナビゲーション */}

@@ -21,10 +21,11 @@ export default function Navbar({ userName, userRole }: { userName: string; userR
   const navItems = [
     ...(canSeeAnimals ? [{ href: "/animals", label: "個体台帳", icon: "🐾" }] : []),
     { href: "/daily-records", label: "日次記録", icon: "📋" },
-    { href: "/medications", label: "投薬記録", icon: "💊" },
+    { href: "/medications/chart", label: "投薬記録", icon: "💊" },
     { href: "/events", label: "特記事項", icon: "📅" },
     ...(canSeeAnimals ? [{ href: "/cat-toilet", label: "猫トイレ", icon: "🐈" }] : []),
     ...(isAdmin ? [{ href: "/staff", label: "スタッフ管理", icon: "👥" }] : []),
+    ...(isAdmin ? [{ href: "/admin/audit-log", label: "操作履歴", icon: "📜" }] : []),
   ];
 
   return (
