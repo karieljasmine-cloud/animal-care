@@ -10,11 +10,12 @@ import { Fragment } from "react";
 const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
 const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
 
-function sortBySpecies<T extends { species: string; name: string }>(arr: T[]): T[] {
+function sortBySpecies<T extends { species: string; name: string; nameKana?: string | null }>(arr: T[]): T[] {
   return [...arr].sort((a, b) => {
     const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : SPECIES_ORDER.length; };
     const dr = si(a.species) - si(b.species);
-    return dr !== 0 ? dr : a.name.localeCompare(b.name, "ja");
+    const key = (x: T) => x.nameKana || x.name;
+    return dr !== 0 ? dr : key(a).localeCompare(key(b), "ja");
   });
 }
 

@@ -7,6 +7,7 @@ import { format } from "date-fns";
 type AnimalData = {
   id: string;
   name: string;
+  nameKana: string | null;
   species: string;
   breed: string | null;
   birthDate: Date | null;
@@ -28,20 +29,31 @@ function fmtDate(d: Date | null | undefined) {
   return format(new Date(d), "yyyy-MM-dd");
 }
 
+function needsKana(name: string): boolean {
+  return /[一-龥A-Za-z]/.test(name);
+}
+
 export default function AnimalForm({ animal }: { animal?: AnimalData }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [nameValue, setNameValue] = useState(animal?.name ?? "");
   const action = animal ? updateAnimal.bind(null, animal.id) : createAnimal;
+
+  const requiresKana = needsKana(nameValue);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     const form = e.currentTarget;
     const newErrors: Record<string, string> = {};
 
     const nameVal = (form.elements.namedItem("name") as HTMLInputElement)?.value?.trim();
+    const kanaVal = (form.elements.namedItem("nameKana") as HTMLInputElement)?.value?.trim();
     const speciesVal = (form.elements.namedItem("species") as HTMLSelectElement)?.value;
     const sexVal = (form.elements.namedItem("sex") as HTMLSelectElement)?.value;
     const intakeDateVal = (form.elements.namedItem("intakeDate") as HTMLInputElement)?.value;
 
     if (!nameVal) newErrors.name = "名前を入力してください";
+    if (nameVal && needsKana(nameVal) && !kanaVal) {
+      newErrors.nameKana = "漢字・アルファベットを含む名前はふりがな必須です";
+    }
     if (!speciesVal) newErrors.species = "種類を選択してください";
     if (!sexVal) newErrors.sex = "性別を選択してください";
     if (!intakeDateVal) newErrors.intakeDate = "受け入れ日を入力してください";
@@ -73,7 +85,40 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
       )}
 
       <Section title="基本情報">
-        <Field label="名前" name="name" required defaultValue={animal?.name} error={errors.name} />
+        <div data-has-error={!!errors.name || undefined}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            名前 <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="name"
+            defaultValue={animal?.name}
+            onChange={(e) => setNameValue(e.target.value)}
+            className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+              errors.name ? "border-red-400 focus:ring-red-400 bg-red-50" : "border-gray-300 focus:ring-green-500"
+            }`}
+          />
+          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+        </div>
+
+        <div data-has-error={!!errors.nameKana || undefined}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            ふりがな
+            {requiresKana && <span className="text-red-500 ml-0.5">*</span>}
+            <span className="text-xs text-gray-400 font-normal ml-2">（漢字・アルファベット名の場合は必須・あいうえお順に使用）</span>
+          </label>
+          <input
+            type="text"
+            name="nameKana"
+            defaultValue={animal?.nameKana ?? ""}
+            placeholder="ひらがなで入力"
+            className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+              errors.nameKana ? "border-red-400 focus:ring-red-400 bg-red-50" : "border-gray-300 focus:ring-green-500"
+            }`}
+          />
+          {errors.nameKana && <p className="text-red-500 text-xs mt-1">{errors.nameKana}</p>}
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div data-has-error={!!errors.species || undefined}>
             <label className="block text-sm font-medium text-gray-700 mb-1">

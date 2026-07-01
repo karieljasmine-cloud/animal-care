@@ -9,7 +9,7 @@ const getActiveAnimals = unstable_cache(
     prisma.animal.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, species: true },
+      select: { id: true, name: true, nameKana: true, species: true },
     }),
   ["active-animals"],
   { revalidate: 60, tags: ["animals"] }
@@ -35,11 +35,12 @@ function getDailyRecords(animalId?: string) {
 const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
 const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
 
-function sortAndGroupBySpecies<T extends { species: string; name: string }>(arr: T[]) {
+function sortAndGroupBySpecies<T extends { species: string; name: string; nameKana?: string | null }>(arr: T[]) {
   const sorted = [...arr].sort((a, b) => {
     const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : SPECIES_ORDER.length; };
     const dr = si(a.species) - si(b.species);
-    return dr !== 0 ? dr : a.name.localeCompare(b.name, "ja");
+    const key = (x: T) => x.nameKana || x.name;
+    return dr !== 0 ? dr : key(a).localeCompare(key(b), "ja");
   });
   const groups: { species: string; items: T[] }[] = [];
   for (const item of sorted) {

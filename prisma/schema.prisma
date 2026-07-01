@@ -24,6 +24,7 @@ model User {
 model Animal {
   id             String         @id @default(cuid())
   name           String
+  nameKana       String?
   species        String
   breed          String?
   birthDate      DateTime?

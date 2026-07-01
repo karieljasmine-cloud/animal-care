@@ -25,7 +25,7 @@ function getMedicationChartData(fromDateStr: string) {
         select: {
           id: true, medicineName: true, dosage: true, frequency: true,
           remainingDoses: true, openedAt: true, expiresAfterDays: true, notes: true,
-          animal: { select: { id: true, name: true, species: true } },
+          animal: { select: { id: true, name: true, nameKana: true, species: true } },
           logs: {
             where: { logDate: { gte: from } },
             select: { id: true, logDate: true, timeOfDay: true, staff: { select: { name: true } } },
@@ -63,7 +63,9 @@ export default async function MedicationChartPage({
     const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : SPECIES_ORDER.length; };
     const dr = si(a.animal.species) - si(b.animal.species);
     if (dr !== 0) return dr;
-    if (a.animal.name !== b.animal.name) return a.animal.name.localeCompare(b.animal.name, "ja");
+    const aKey = a.animal.nameKana || a.animal.name;
+    const bKey = b.animal.nameKana || b.animal.name;
+    if (aKey !== bKey) return aKey.localeCompare(bKey, "ja");
     return a.medicineName.localeCompare(b.medicineName, "ja");
   });
 

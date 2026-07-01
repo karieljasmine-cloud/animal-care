@@ -17,6 +17,7 @@ export async function createAnimal(formData: FormData) {
   const animal = await prisma.animal.create({
     data: {
       name: formData.get("name") as string,
+      nameKana: (formData.get("nameKana") as string) || null,
       species: formData.get("species") as string,
       breed: (formData.get("breed") as string) || null,
       birthDate: parseDate(formData.get("birthDate")),
@@ -50,6 +51,7 @@ export async function updateAnimal(id: string, formData: FormData) {
     where: { id },
     data: {
       name: formData.get("name") as string,
+      nameKana: (formData.get("nameKana") as string) || null,
       species: formData.get("species") as string,
       breed: (formData.get("breed") as string) || null,
       birthDate: parseDate(formData.get("birthDate")),

@@ -17,6 +17,7 @@ import { unstable_cache } from "next/cache";
 import AnimalSelectorClient from "@/components/AnimalSelectorClient";
 import DeleteEventButton from "@/components/DeleteEventButton";
 import CalendarCell from "@/components/CalendarCell";
+import FilterTabs from "@/components/FilterTabs";
 
 const EVENT_TYPE_CONFIG = {
   adHocMed: { label: "突発的なお薬", color: "bg-purple-100 text-purple-800", dotColor: "bg-purple-500", icon: "💊" },
@@ -26,6 +27,16 @@ const EVENT_TYPE_CONFIG = {
 
 type EventType = keyof typeof EVENT_TYPE_CONFIG;
 
+type DisplayEvent = {
+  id: string;
+  eventDate: Date;
+  eventType: string;
+  title: string;
+  notes: string | null;
+  animal: { id: string; name: string };
+  isFromDailyRecord: boolean;
+};
+
 function getCalendarData(monthStr: string, animalId: string, type: string, species: string) {
   return unstable_cache(
     async () => {
@@ -33,7 +44,21 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
       const start = startOfMonth(new Date(year, month - 1));
       const end = endOfMonth(new Date(year, month - 1));
 
-      const [events, animals] = await Promise.all([
+      const fetchDrCare = !type || type === "care";
+      const fetchDrInjury = !type || type === "injury";
+      const fetchDailyRecords = fetchDrCare || fetchDrInjury;
+
+      const drOrConditions = [
+        ...(fetchDrCare ? [
+          { brushing: true as const },
+          { nailTrimming: true as const },
+          { trimming: true as const },
+          { shampoo: true as const },
+        ] : []),
+        ...(fetchDrInjury ? [{ injury: { not: null } }] : []),
+      ];
+
+      const [events, animals, dailyRecords] = await Promise.all([
         prisma.animalEvent.findMany({
           where: {
             eventDate: { gte: start, lte: end },
@@ -49,12 +74,34 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
           select: { id: true, name: true },
           orderBy: { name: "asc" },
         }),
+        fetchDailyRecords && drOrConditions.length > 0
+          ? prisma.dailyRecord.findMany({
+              where: {
+                recordDate: { gte: start, lte: end },
+                ...(animalId ? { animalId } : {}),
+                ...(species ? { animal: { species } } : {}),
+                OR: drOrConditions,
+              },
+              select: {
+                id: true,
+                recordDate: true,
+                brushing: true,
+                nailTrimming: true,
+                trimming: true,
+                shampoo: true,
+                injury: true,
+                animalId: true,
+                animal: { select: { id: true, name: true } },
+              },
+              orderBy: { recordDate: "asc" },
+            })
+          : Promise.resolve([]),
       ]);
 
-      return { events, animals };
+      return { events, animals, dailyRecords };
     },
     ["animal-events-calendar", monthStr, animalId || "all", type || "all", species || "all"],
-    { revalidate: 30, tags: ["animal-events", "animals"] }
+    { revalidate: 30, tags: ["animal-events", "animals", "daily-records"] }
   )();
 }
 
@@ -80,7 +127,54 @@ export default async function EventsCalendarPage({
   const animalIdFilter = sp.animalId ?? "";
   const speciesFilter = sp.species ?? "";
 
-  const { events, animals } = await getCalendarData(monthStr, animalIdFilter, typeFilter, speciesFilter);
+  const { events, animals, dailyRecords } = await getCalendarData(monthStr, animalIdFilter, typeFilter, speciesFilter);
+
+  // 日次記録から仮想イベントを生成
+  const drEvents: DisplayEvent[] = [];
+  for (const dr of dailyRecords) {
+    const careItems: string[] = [];
+    if (dr.brushing) careItems.push("ブラッシング");
+    if (dr.nailTrimming) careItems.push("爪切り");
+    if (dr.trimming) careItems.push("トリミング");
+    if (dr.shampoo) careItems.push("シャンプー");
+
+    if (careItems.length > 0) {
+      drEvents.push({
+        id: `dr-care-${dr.id}`,
+        eventDate: dr.recordDate,
+        eventType: "care",
+        title: careItems.join("・"),
+        notes: null,
+        animal: dr.animal,
+        isFromDailyRecord: true,
+      });
+    }
+    if (dr.injury) {
+      drEvents.push({
+        id: `dr-injury-${dr.id}`,
+        eventDate: dr.recordDate,
+        eventType: "injury",
+        title: dr.injury,
+        notes: null,
+        animal: dr.animal,
+        isFromDailyRecord: true,
+      });
+    }
+  }
+
+  // 全イベントをマージ（日付順）
+  const allEvents: DisplayEvent[] = [
+    ...events.map((ev) => ({
+      id: ev.id,
+      eventDate: ev.eventDate,
+      eventType: ev.eventType,
+      title: ev.title,
+      notes: ev.notes,
+      animal: ev.animal,
+      isFromDailyRecord: false,
+    })),
+    ...drEvents,
+  ].sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
 
   const [year, month] = monthStr.split("-").map(Number);
   const currentDate = new Date(year, month - 1);
@@ -93,24 +187,24 @@ export default async function EventsCalendarPage({
   const prevMonth = format(subMonths(currentDate, 1), "yyyy-MM");
   const nextMonth = format(addMonths(currentDate, 1), "yyyy-MM");
 
-  const eventsByDate = new Map<string, typeof events>();
-  for (const ev of events) {
+  const eventsByDate = new Map<string, DisplayEvent[]>();
+  for (const ev of allEvents) {
     const key = format(new Date(ev.eventDate), "yyyy-MM-dd");
     if (!eventsByDate.has(key)) eventsByDate.set(key, []);
     eventsByDate.get(key)!.push(ev);
   }
 
   const speciesTabs = [
-    { value: "", label: "全体" },
-    { value: "犬", label: "🐕 犬" },
-    { value: "猫", label: "🐈 猫" },
+    { value: "", label: "全体", href: buildUrl(monthStr, typeFilter, "", "") },
+    { value: "犬", label: "🐕 犬", href: buildUrl(monthStr, typeFilter, "", "犬") },
+    { value: "猫", label: "🐈 猫", href: buildUrl(monthStr, typeFilter, "", "猫") },
   ];
 
   const filterTabs = [
-    { value: "", label: "全種別" },
-    { value: "adHocMed", label: "💊 突発的なお薬" },
-    { value: "care", label: "✂️ ケア" },
-    { value: "injury", label: "🩹 怪我・異常" },
+    { value: "", label: "全種別", href: buildUrl(monthStr, "", animalIdFilter, speciesFilter) },
+    { value: "adHocMed", label: "💊 突発的なお薬", href: buildUrl(monthStr, "adHocMed", animalIdFilter, speciesFilter) },
+    { value: "care", label: "✂️ ケア", href: buildUrl(monthStr, "care", animalIdFilter, speciesFilter) },
+    { value: "injury", label: "🩹 怪我・異常", href: buildUrl(monthStr, "injury", animalIdFilter, speciesFilter) },
   ];
 
   return (
@@ -127,37 +221,13 @@ export default async function EventsCalendarPage({
       </div>
 
       {/* Species tabs */}
-      <div className="flex gap-2 mb-2 flex-wrap">
-        {speciesTabs.map(({ value, label }) => (
-          <Link
-            key={value}
-            href={buildUrl(monthStr, typeFilter, "", value)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              speciesFilter === value
-                ? "bg-gray-700 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
+      <div className="mb-2">
+        <FilterTabs tabs={speciesTabs} currentValue={speciesFilter} activeStyle="bg-gray-700 text-white" />
       </div>
 
       {/* Type filter tabs */}
-      <div className="flex gap-2 mb-3 flex-wrap">
-        {filterTabs.map(({ value, label }) => (
-          <Link
-            key={value}
-            href={buildUrl(monthStr, value, animalIdFilter, speciesFilter)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              typeFilter === value
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
+      <div className="mb-3">
+        <FilterTabs tabs={filterTabs} currentValue={typeFilter} />
       </div>
 
       {/* Month navigation + Animal selector */}
@@ -194,7 +264,6 @@ export default async function EventsCalendarPage({
 
       {/* Calendar grid */}
       <div className="bg-white shadow-sm overflow-hidden mb-6 -mx-4">
-        {/* Day of week header */}
         <div className="grid grid-cols-7 border-b bg-gray-50">
           {DOW.map((d, i) => (
             <div
@@ -207,7 +276,6 @@ export default async function EventsCalendarPage({
             </div>
           ))}
         </div>
-        {/* Calendar cells */}
         <div className="grid grid-cols-7 divide-x divide-y">
           {calDays.map((day) => {
             const dateKey = format(day, "yyyy-MM-dd");
@@ -228,6 +296,7 @@ export default async function EventsCalendarPage({
                   eventType: ev.eventType,
                   title: ev.title,
                   animalName: ev.animal.name,
+                  isFromDailyRecord: ev.isFromDailyRecord,
                 }))}
               />
             );
@@ -238,12 +307,12 @@ export default async function EventsCalendarPage({
       {/* Event list for the month */}
       <h2 className="text-base font-semibold text-gray-700 mb-3">
         {format(currentDate, "M月", { locale: ja })}のイベント一覧
-        {events.length > 0 && (
-          <span className="text-sm font-normal text-gray-400 ml-2">（{events.length}件）</span>
+        {allEvents.length > 0 && (
+          <span className="text-sm font-normal text-gray-400 ml-2">（{allEvents.length}件）</span>
         )}
       </h2>
 
-      {events.length === 0 ? (
+      {allEvents.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-400 text-sm">
           この月の記録はありません
           <div className="mt-3">
@@ -254,7 +323,7 @@ export default async function EventsCalendarPage({
         </div>
       ) : (
         <div className="space-y-2">
-          {events.map((ev) => {
+          {allEvents.map((ev) => {
             const cfg = EVENT_TYPE_CONFIG[ev.eventType as EventType];
             return (
               <div
@@ -277,9 +346,12 @@ export default async function EventsCalendarPage({
                     {ev.notes && (
                       <div className="text-xs text-gray-500 mt-0.5 truncate">{ev.notes}</div>
                     )}
+                    {ev.isFromDailyRecord && (
+                      <div className="text-xs text-gray-400 mt-0.5">日次記録より自動表示</div>
+                    )}
                   </div>
                 </div>
-                <DeleteEventButton id={ev.id} />
+                {!ev.isFromDailyRecord && <DeleteEventButton id={ev.id} />}
               </div>
             );
           })}

@@ -43,20 +43,23 @@ export default async function AnimalDetailPage(props: { params: Promise<{ id: st
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
+      <div className="flex justify-between items-start gap-3">
+        <div className="min-w-0">
           <Link href="/animals" className="text-green-600 text-sm hover:underline">
             ← 個体台帳へ戻る
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800 mt-1 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-800 mt-1 flex items-center gap-2 flex-wrap">
             {animal.name}
             {!animal.isActive && (
               <span className="text-sm bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">退籍済み</span>
             )}
           </h1>
+          {animal.nameKana && (
+            <p className="text-sm text-gray-400 mt-0.5">{animal.nameKana}</p>
+          )}
         </div>
         {canEdit && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 shrink-0">
             <Link
               href={`/animals/${id}/edit`}
               className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"

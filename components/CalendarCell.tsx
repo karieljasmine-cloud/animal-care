@@ -15,6 +15,7 @@ type CellEvent = {
   eventType: string;
   title: string;
   animalName: string;
+  isFromDailyRecord?: boolean;
 };
 
 type Props = {
@@ -104,8 +105,11 @@ export default function CalendarCell({ dayNum, inMonth, today, dow, events }: Pr
               {events.map((ev) => {
                 const cfg = EVENT_TYPE_CONFIG[ev.eventType as EventType];
                 return (
-                  <div key={ev.id} className={`rounded-lg px-3 py-2 ${cfg?.color ?? "bg-gray-100 text-gray-700"}`}>
-                    <div className="text-xs font-semibold">{cfg?.icon} {cfg?.label ?? ev.eventType}</div>
+                  <div key={ev.id} className={`rounded-lg px-3 py-2 ${cfg?.color ?? "bg-gray-100 text-gray-700"} ${ev.isFromDailyRecord ? "opacity-80 ring-1 ring-inset ring-current/20" : ""}`}>
+                    <div className="text-xs font-semibold flex items-center gap-1">
+                      {cfg?.icon} {cfg?.label ?? ev.eventType}
+                      {ev.isFromDailyRecord && <span className="text-xs font-normal opacity-70">（日次記録）</span>}
+                    </div>
                     <div className="text-sm font-bold mt-0.5">{ev.animalName}</div>
                     <div className="text-xs mt-0.5 opacity-80">{ev.title}</div>
                   </div>
