@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { differenceInDays, format } from "date-fns";
 import { ja } from "date-fns/locale";
 import CatToiletButtons from "@/components/CatToiletButtons";
+import CatToiletLogItem from "@/components/CatToiletLogItem";
 
 const SAND_ALERT_DAYS = 30;
 const SHEET_ALERT_DAYS = 7;
@@ -15,17 +16,13 @@ export default async function CatToiletPage() {
       name: true,
       catToiletLogs: {
         orderBy: { changedAt: "desc" },
-        take: 2,
-        select: { logType: true, changedAt: true },
+        take: 10,
+        select: { id: true, logType: true, changedAt: true },
       },
     },
   });
 
   const now = new Date();
-
-  function getLastLog(logs: { logType: string; changedAt: Date }[], type: "sand" | "sheet") {
-    return logs.find((l) => l.logType === type) ?? null;
-  }
 
   function daysSince(date: Date | null): number | null {
     if (!date) return null;
@@ -50,10 +47,12 @@ export default async function CatToiletPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {cats.map((cat) => {
-            const sandLog = getLastLog(cat.catToiletLogs, "sand");
-            const sheetLog = getLastLog(cat.catToiletLogs, "sheet");
-            const sandDays = daysSince(sandLog?.changedAt ?? null);
-            const sheetDays = daysSince(sheetLog?.changedAt ?? null);
+            const sandLogs = cat.catToiletLogs.filter((l) => l.logType === "sand");
+            const sheetLogs = cat.catToiletLogs.filter((l) => l.logType === "sheet");
+            const latestSand = sandLogs[0] ?? null;
+            const latestSheet = sheetLogs[0] ?? null;
+            const sandDays = daysSince(latestSand?.changedAt ?? null);
+            const sheetDays = daysSince(latestSheet?.changedAt ?? null);
             const sandAlert = sandDays === null || sandDays >= SAND_ALERT_DAYS;
             const sheetAlert = sheetDays === null || sheetDays >= SHEET_ALERT_DAYS;
 
@@ -77,15 +76,26 @@ export default async function CatToiletPage() {
                     )}
                   </div>
                   <div className={`text-xs mt-1 ${sandAlert ? "text-red-600" : "text-gray-500"}`}>
-                    {sandLog ? (
+                    {latestSand ? (
                       <>
-                        最終交換：{format(sandLog.changedAt, "M月d日(E)", { locale: ja })}
+                        最終交換：{format(latestSand.changedAt, "M月d日(E)", { locale: ja })}
                         　<span className="font-semibold">{sandDays}日経過</span>
                       </>
                     ) : (
                       <span className="text-red-500 font-medium">記録なし ⚠️</span>
                     )}
                   </div>
+                  {sandLogs.length > 0 && (
+                    <div className="mt-2 border-t border-amber-100 pt-1.5 space-y-0.5">
+                      {sandLogs.map((log) => (
+                        <CatToiletLogItem
+                          key={log.id}
+                          id={log.id}
+                          changedAt={log.changedAt.toISOString()}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* シーツ */}
@@ -99,15 +109,26 @@ export default async function CatToiletPage() {
                     )}
                   </div>
                   <div className={`text-xs mt-1 ${sheetAlert ? "text-red-600" : "text-gray-500"}`}>
-                    {sheetLog ? (
+                    {latestSheet ? (
                       <>
-                        最終交換：{format(sheetLog.changedAt, "M月d日(E)", { locale: ja })}
+                        最終交換：{format(latestSheet.changedAt, "M月d日(E)", { locale: ja })}
                         　<span className="font-semibold">{sheetDays}日経過</span>
                       </>
                     ) : (
                       <span className="text-red-500 font-medium">記録なし ⚠️</span>
                     )}
                   </div>
+                  {sheetLogs.length > 0 && (
+                    <div className="mt-2 border-t border-sky-100 pt-1.5 space-y-0.5">
+                      {sheetLogs.map((log) => (
+                        <CatToiletLogItem
+                          key={log.id}
+                          id={log.id}
+                          changedAt={log.changedAt.toISOString()}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <CatToiletButtons animalId={cat.id} />
