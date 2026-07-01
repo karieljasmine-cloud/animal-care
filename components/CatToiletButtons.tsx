@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { logCatToilet } from "@/app/actions/cat-toilet";
 
 export default function CatToiletButtons({ animalId }: { animalId: string }) {
+  const router = useRouter();
   const [pending, setPending] = useState<"sand" | "sheet" | null>(null);
   const [done, setDone] = useState<"sand" | "sheet" | null>(null);
 
@@ -14,7 +16,13 @@ export default function CatToiletButtons({ animalId }: { animalId: string }) {
     try {
       await logCatToilet(animalId, logType);
       setDone(logType);
-      setTimeout(() => setDone(null), 2000);
+      // 2秒後にフィードバック表示を消してページを更新
+      setTimeout(() => {
+        setDone(null);
+        router.refresh();
+      }, 2000);
+    } catch {
+      // エラー時もボタンを再活性化（finally で処理）
     } finally {
       setPending(null);
     }
