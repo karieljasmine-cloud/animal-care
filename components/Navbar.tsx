@@ -31,7 +31,7 @@ export default function Navbar({ userName, userRole }: { userName: string; userR
 
   function isActive(item: { href: string; exact?: boolean }) {
     if (item.exact) return pathname === item.href || pathname.startsWith(item.href + "/new") || (pathname.startsWith(item.href + "/") && !pathname.startsWith(item.href + "/chart"));
-    return isActive(item);
+    return pathname.startsWith(item.href);
   }
 
   return (
