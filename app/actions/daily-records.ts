@@ -142,8 +142,6 @@ export async function quickUpdateExcretion(
       data: field === "stool" ? { stoolCondition: nextValue } : { urineAmount: nextValue },
       select: { id: true, stoolCondition: true, urineAmount: true },
     });
-    updateTag("daily-records");
-    revalidatePath("/daily-records/chart");
     return { stoolCondition: updated.stoolCondition, urineAmount: updated.urineAmount, recordId: updated.id };
   } else {
     const created = await prisma.dailyRecord.create({
@@ -163,8 +161,6 @@ export async function quickUpdateExcretion(
       },
       select: { id: true, stoolCondition: true, urineAmount: true },
     });
-    updateTag("daily-records");
-    revalidatePath("/daily-records/chart");
     return { stoolCondition: created.stoolCondition, urineAmount: created.urineAmount, recordId: created.id };
   }
 }
