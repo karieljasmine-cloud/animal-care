@@ -17,68 +17,49 @@ type Props = {
   initialData: Record<string, CellData>;
 };
 
-const STOOL_CYCLE: (string | null)[] = [null, "良好", "軟便", "下痢", "なし"];
-const URINE_CYCLE: (string | null)[] = [null, "普通", "少ない", "なし"];
 const TIMES = ["AM", "PM"] as const;
 
-function stoolSym(v: string | null) {
-  if (!v) return "";
-  if (v === "良好") return "○";
-  if (v === "軟便") return "△";
-  if (v === "下痢") return "×";
-  return "－";
-}
-function urineSym(v: string | null) {
-  if (!v) return "";
-  if (v === "普通") return "○";
-  if (v === "少ない") return "△";
-  if (v === "なし") return "－";
-  return "×";
-}
 function stoolCls(v: string | null) {
-  if (!v) return "text-gray-200 bg-gray-50";
-  if (v === "良好") return "text-green-900 bg-green-200 border-2 border-green-500";
-  if (v === "軟便") return "text-amber-900 bg-amber-200 border-2 border-amber-500";
-  if (v === "下痢") return "text-red-900 bg-red-200 border-2 border-red-600";
-  return "text-slate-600 bg-slate-100 border-2 border-slate-400";
+  if (!v) return "text-gray-400 bg-gray-50 border-gray-200";
+  if (v === "良好") return "text-green-900 bg-green-100 border-green-400";
+  if (v === "軟便") return "text-amber-900 bg-amber-100 border-amber-400";
+  if (v === "下痢") return "text-red-900 bg-red-100 border-red-500";
+  return "text-slate-700 bg-slate-100 border-slate-400";
 }
 function urineCls(v: string | null) {
-  if (!v) return "text-gray-200 bg-gray-50";
-  if (v === "普通") return "text-blue-900 bg-blue-200 border-2 border-blue-500";
-  if (v === "少ない") return "text-orange-900 bg-orange-200 border-2 border-orange-500";
-  return "text-slate-600 bg-slate-100 border-2 border-slate-400";
+  if (!v) return "text-gray-400 bg-gray-50 border-gray-200";
+  if (v === "普通") return "text-blue-900 bg-blue-100 border-blue-400";
+  if (v === "少ない") return "text-orange-900 bg-orange-100 border-orange-400";
+  return "text-slate-700 bg-slate-100 border-slate-400";
 }
 
 export default function ExcretionChartClient({ animals, dates, initialData }: Props) {
   const [data, setData] = useState<Record<string, CellData>>(initialData);
   const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
 
-  const handleClick = (
+  const handleChange = (
     animalId: string,
     dateStr: string,
     timeOfDay: string,
-    field: "stool" | "urine"
+    field: "stool" | "urine",
+    rawValue: string
   ) => {
+    const newValue = rawValue === "" ? null : rawValue;
     const baseKey = `${animalId}_${dateStr}_${timeOfDay}`;
     const pendingKey = `${baseKey}_${field}`;
-    if (pendingKeys.has(pendingKey)) return;
 
     const current = data[baseKey] ?? { stoolCondition: null, urineAmount: null, recordId: null };
-    const currentValue = field === "stool" ? current.stoolCondition : current.urineAmount;
-    const cycle = field === "stool" ? STOOL_CYCLE : URINE_CYCLE;
-    const nextValue = cycle[(cycle.indexOf(currentValue) + 1) % cycle.length];
 
-    // 即時切り替え
     setData(prev => ({
       ...prev,
       [baseKey]: {
         ...current,
-        [field === "stool" ? "stoolCondition" : "urineAmount"]: nextValue,
+        [field === "stool" ? "stoolCondition" : "urineAmount"]: newValue,
       },
     }));
     setPendingKeys(prev => new Set([...prev, pendingKey]));
 
-    quickUpdateExcretion(animalId, dateStr, timeOfDay, field, currentValue)
+    quickUpdateExcretion(animalId, dateStr, timeOfDay, field, newValue)
       .then(result => {
         setData(prev => ({
           ...prev,
@@ -126,7 +107,7 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
               TIMES.map((t) => (
                 <th
                   key={`${d.toISOString()}_${t}`}
-                  className={`px-1 py-1 text-center text-xs font-medium border-b border-r min-w-[56px] ${
+                  className={`px-1 py-1 text-center text-xs font-medium border-b border-r min-w-[82px] ${
                     t === "AM" ? "text-orange-400 bg-orange-50" : "text-indigo-400 bg-indigo-50"
                   }`}
                 >
@@ -150,24 +131,37 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
                   const stoolPending = pendingKeys.has(`${key}_stool`);
                   const urinePending = pendingKeys.has(`${key}_urine`);
                   return (
-                    <td key={`${d.toISOString()}_${t}`} className="px-1 py-1 border-b border-r">
-                      <div className="flex flex-col gap-0.5 w-[54px]">
-                        <button
-                          onClick={() => handleClick(animal.id, dateStr, t, "stool")}
-                          disabled={stoolPending}
-                          className={`w-full h-[42px] rounded flex items-center justify-center gap-0.5 font-bold text-lg transition-all active:scale-95 disabled:opacity-50 ${stoolCls(cell.stoolCondition)}`}
-                        >
-                          <span className="text-[9px] font-normal leading-none opacity-50">便</span>
-                          <span className="leading-none">{stoolSym(cell.stoolCondition)}</span>
-                        </button>
-                        <button
-                          onClick={() => handleClick(animal.id, dateStr, t, "urine")}
-                          disabled={urinePending}
-                          className={`w-full h-[42px] rounded flex items-center justify-center gap-0.5 font-bold text-lg transition-all active:scale-95 disabled:opacity-50 ${urineCls(cell.urineAmount)}`}
-                        >
-                          <span className="text-[9px] font-normal leading-none opacity-50">尿</span>
-                          <span className="leading-none">{urineSym(cell.urineAmount)}</span>
-                        </button>
+                    <td key={`${d.toISOString()}_${t}`} className="px-1 py-1.5 border-b border-r">
+                      <div className="flex flex-col gap-1 w-[78px]">
+                        <div className="flex items-center gap-0.5">
+                          <span className="text-[9px] text-gray-400 w-3 shrink-0">便</span>
+                          <select
+                            value={cell.stoolCondition ?? ""}
+                            onChange={(e) => handleChange(animal.id, dateStr, t, "stool", e.target.value)}
+                            disabled={stoolPending}
+                            className={`w-full text-xs font-bold rounded border py-1 px-0.5 cursor-pointer disabled:opacity-50 ${stoolCls(cell.stoolCondition)}`}
+                          >
+                            <option value="">未記録</option>
+                            <option value="良好">○ 良好</option>
+                            <option value="軟便">△ 軟便</option>
+                            <option value="下痢">× 下痢</option>
+                            <option value="なし">－ なし</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          <span className="text-[9px] text-gray-400 w-3 shrink-0">尿</span>
+                          <select
+                            value={cell.urineAmount ?? ""}
+                            onChange={(e) => handleChange(animal.id, dateStr, t, "urine", e.target.value)}
+                            disabled={urinePending}
+                            className={`w-full text-xs font-bold rounded border py-1 px-0.5 cursor-pointer disabled:opacity-50 ${urineCls(cell.urineAmount)}`}
+                          >
+                            <option value="">未記録</option>
+                            <option value="普通">○ 普通</option>
+                            <option value="少ない">△ 少ない</option>
+                            <option value="なし">－ なし</option>
+                          </select>
+                        </div>
                       </div>
                     </td>
                   );

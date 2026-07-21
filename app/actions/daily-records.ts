@@ -113,22 +113,15 @@ export async function updateDailyRecord(id: string, formData: FormData) {
   redirect(`/daily-records?animalId=${existing.animalId}`);
 }
 
-const STOOL_CYCLE: (string | null)[] = [null, "良好", "軟便", "下痢", "なし"];
-const URINE_CYCLE: (string | null)[] = [null, "普通", "少ない", "なし"];
-
 export async function quickUpdateExcretion(
   animalId: string,
   dateStr: string,
   timeOfDay: string,
   field: "stool" | "urine",
-  currentValue: string | null
+  newValue: string | null
 ): Promise<{ stoolCondition: string | null; urineAmount: string | null; recordId: string }> {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
-
-  const cycle = field === "stool" ? STOOL_CYCLE : URINE_CYCLE;
-  const currentIdx = cycle.indexOf(currentValue);
-  const nextValue = cycle[(currentIdx + 1) % cycle.length];
 
   const recordDate = new Date(dateStr);
 
@@ -139,19 +132,19 @@ export async function quickUpdateExcretion(
   if (existing) {
     const updated = await prisma.dailyRecord.update({
       where: { id: existing.id },
-      data: field === "stool" ? { stoolCondition: nextValue } : { urineAmount: nextValue },
+      data: field === "stool" ? { stoolCondition: newValue } : { urineAmount: newValue },
       select: { id: true, stoolCondition: true, urineAmount: true },
     });
     return { stoolCondition: updated.stoolCondition, urineAmount: updated.urineAmount, recordId: updated.id };
-  } else {
+  } else if (newValue !== null) {
     const created = await prisma.dailyRecord.create({
       data: {
         animalId,
         recordDate,
         timeOfDay,
         staffId: (session.user as { id?: string }).id!,
-        stoolCondition: field === "stool" ? nextValue : null,
-        urineAmount: field === "urine" ? nextValue : null,
+        stoolCondition: field === "stool" ? newValue : null,
+        urineAmount: field === "urine" ? newValue : null,
         brushing: false,
         nailTrimming: false,
         trimming: false,
@@ -162,5 +155,7 @@ export async function quickUpdateExcretion(
       select: { id: true, stoolCondition: true, urineAmount: true },
     });
     return { stoolCondition: created.stoolCondition, urineAmount: created.urineAmount, recordId: created.id };
+  } else {
+    return { stoolCondition: null, urineAmount: null, recordId: "" };
   }
 }
