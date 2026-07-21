@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createAnimalEvent } from "@/app/actions/events";
 import Link from "next/link";
+import SubmitButton from "@/components/SubmitButton";
 import { format } from "date-fns";
 
 const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
@@ -122,12 +123,12 @@ export default async function NewEventPage() {
         </div>
 
         <div className="flex gap-3">
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+          <SubmitButton
+            className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-60"
+            loadingText="記録中..."
           >
             記録する
-          </button>
+          </SubmitButton>
           <Link
             href="/events"
             className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: "保護動物管理システム",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className="h-full">
-      <body className="min-h-full bg-gray-50">{children}</body>
+      <body className="min-h-full bg-gray-50">
+        <NextTopLoader color="#16a34a" showSpinner={false} height={3} />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { createMedication, updateMedication } from "@/app/actions/medications";
+import SubmitButton from "@/components/SubmitButton";
 import { format } from "date-fns";
 
 const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
@@ -188,12 +189,12 @@ export default function MedicationForm({
       </div>
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700"
+        <SubmitButton
+          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-60"
+          loadingText={medication ? "更新中..." : "登録中..."}
         >
           {medication ? "更新する" : "登録する"}
-        </button>
+        </SubmitButton>
         <a
           href="/medications"
           className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200"

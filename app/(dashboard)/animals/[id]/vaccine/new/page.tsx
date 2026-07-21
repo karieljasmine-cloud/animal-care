@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import SubmitButton from "@/components/SubmitButton";
 
 export default async function NewVaccinePage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -78,12 +79,12 @@ export default async function NewVaccinePage(props: { params: Promise<{ id: stri
           />
         </div>
         <div className="flex gap-3">
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700"
+          <SubmitButton
+            className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-60"
+            loadingText="記録中..."
           >
             記録する
-          </button>
+          </SubmitButton>
           <a
             href={`/animals/${id}`}
             className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200"

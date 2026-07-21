@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createAnimal, updateAnimal } from "@/app/actions/animals";
+import SubmitButton from "@/components/SubmitButton";
 import { format } from "date-fns";
 
 type AnimalData = {
@@ -199,12 +200,12 @@ export default function AnimalForm({ animal }: { animal?: AnimalData }) {
       </Section>
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+        <SubmitButton
+          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-60"
+          loadingText={animal ? "更新中..." : "登録中..."}
         >
           {animal ? "更新する" : "登録する"}
-        </button>
+        </SubmitButton>
         <a
           href={animal ? `/animals/${animal.id}` : "/animals"}
           className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors"

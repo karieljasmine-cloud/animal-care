@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import SubmitButton from "@/components/SubmitButton";
 import bcrypt from "bcryptjs";
 import { format } from "date-fns";
 import DeleteStaffButton from "@/components/DeleteStaffButton";
@@ -158,12 +159,12 @@ export default async function StaffPage() {
               <option value="admin">管理者（全権限）</option>
             </select>
           </div>
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700"
+          <SubmitButton
+            className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-60"
+            loadingText="追加中..."
           >
             追加する
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </div>

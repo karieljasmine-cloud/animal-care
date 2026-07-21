@@ -1,6 +1,7 @@
 "use client";
 
 import { createDailyRecord, updateDailyRecord } from "@/app/actions/daily-records";
+import SubmitButton from "@/components/SubmitButton";
 import { format } from "date-fns";
 import { useState } from "react";
 
@@ -257,12 +258,12 @@ export default function DailyRecordForm({
       </div>
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+        <SubmitButton
+          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-60"
+          loadingText={record ? "更新中..." : "記録中..."}
         >
           {record ? "更新する" : "記録する"}
-        </button>
+        </SubmitButton>
         <a
           href="/daily-records"
           className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors"
