@@ -17,33 +17,36 @@ type Props = {
   initialData: Record<string, CellData>;
 };
 
-const STOOL_CYCLE: (string | null)[] = [null, "良好", "軟便", "下痢"];
+const STOOL_CYCLE: (string | null)[] = [null, "良好", "軟便", "下痢", "なし"];
 const URINE_CYCLE: (string | null)[] = [null, "普通", "少ない", "なし"];
 const TIMES = ["AM", "PM"] as const;
 
 function stoolSym(v: string | null) {
-  if (!v) return "—";
+  if (!v) return "";
   if (v === "良好") return "○";
   if (v === "軟便") return "△";
-  return "×";
+  if (v === "下痢") return "×";
+  return "－";
 }
 function urineSym(v: string | null) {
-  if (!v) return "—";
+  if (!v) return "";
   if (v === "普通") return "○";
   if (v === "少ない") return "△";
+  if (v === "なし") return "－";
   return "×";
 }
 function stoolCls(v: string | null) {
-  if (!v) return "text-gray-400 bg-gray-50";
+  if (!v) return "text-gray-200 bg-gray-50";
   if (v === "良好") return "text-green-900 bg-green-200 border-2 border-green-500";
   if (v === "軟便") return "text-amber-900 bg-amber-200 border-2 border-amber-500";
-  return "text-red-900 bg-red-200 border-2 border-red-600";
+  if (v === "下痢") return "text-red-900 bg-red-200 border-2 border-red-600";
+  return "text-slate-600 bg-slate-100 border-2 border-slate-400";
 }
 function urineCls(v: string | null) {
-  if (!v) return "text-gray-400 bg-gray-50";
+  if (!v) return "text-gray-200 bg-gray-50";
   if (v === "普通") return "text-blue-900 bg-blue-200 border-2 border-blue-500";
   if (v === "少ない") return "text-orange-900 bg-orange-200 border-2 border-orange-500";
-  return "text-red-900 bg-red-200 border-2 border-red-600";
+  return "text-slate-600 bg-slate-100 border-2 border-slate-400";
 }
 
 export default function ExcretionChartClient({ animals, dates, initialData }: Props) {
@@ -154,7 +157,7 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
                           disabled={stoolPending}
                           className={`w-full h-[42px] rounded flex items-center justify-center gap-0.5 font-bold text-lg transition-all active:scale-95 disabled:opacity-50 ${stoolCls(cell.stoolCondition)}`}
                         >
-                          <span className="text-[9px] font-normal text-gray-400 leading-none">便</span>
+                          <span className="text-[9px] font-normal leading-none opacity-50">便</span>
                           <span className="leading-none">{stoolSym(cell.stoolCondition)}</span>
                         </button>
                         <button
@@ -162,7 +165,7 @@ export default function ExcretionChartClient({ animals, dates, initialData }: Pr
                           disabled={urinePending}
                           className={`w-full h-[42px] rounded flex items-center justify-center gap-0.5 font-bold text-lg transition-all active:scale-95 disabled:opacity-50 ${urineCls(cell.urineAmount)}`}
                         >
-                          <span className="text-[9px] font-normal text-gray-400 leading-none">尿</span>
+                          <span className="text-[9px] font-normal leading-none opacity-50">尿</span>
                           <span className="leading-none">{urineSym(cell.urineAmount)}</span>
                         </button>
                       </div>

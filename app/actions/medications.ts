@@ -131,3 +131,17 @@ export async function toggleMedicationLog(formData: FormData) {
   updateTag("medications");
   revalidatePath("/medications/chart");
 }
+
+export async function updateRemainingDosesDirectly(medicationId: string, count: number | null) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  await prisma.medication.update({
+    where: { id: medicationId },
+    data: { remainingDoses: count },
+  });
+
+  const user = session.user as { id: string; name?: string };
+  await createAuditLog(user.id, user.name ?? "不明", "投薬 残量更新", `ID: ${medicationId} → ${count ?? "なし"}回`);
+  updateTag("medications");
+}

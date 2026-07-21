@@ -113,7 +113,7 @@ export async function updateDailyRecord(id: string, formData: FormData) {
   redirect(`/daily-records?animalId=${existing.animalId}`);
 }
 
-const STOOL_CYCLE: (string | null)[] = [null, "良好", "軟便", "下痢"];
+const STOOL_CYCLE: (string | null)[] = [null, "良好", "軟便", "下痢", "なし"];
 const URINE_CYCLE: (string | null)[] = [null, "普通", "少ない", "なし"];
 
 export async function quickUpdateExcretion(

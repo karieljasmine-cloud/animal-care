@@ -5,6 +5,7 @@ import { format, subDays, startOfDay, addDays, differenceInDays } from "date-fns
 import { ja } from "date-fns/locale";
 import { unstable_cache } from "next/cache";
 import ToggleLogButton from "@/components/ToggleLogButton";
+import RemainingDosesInput from "@/components/RemainingDosesInput";
 
 const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
 const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
@@ -218,11 +219,10 @@ export default async function MedicationChartPage({
                                   {format(new Date(med.startDate), "M/d", { locale: ja })} 〜 {format(new Date(med.endDate), "M/d", { locale: ja })}
                                 </div>
                               )}
-                              {med.remainingDoses !== null && (
-                                <div className={`text-xs mt-0.5 font-semibold ${isLow ? "text-red-500" : "text-gray-400"}`}>
-                                  残量: {med.remainingDoses}回{isLow && " ⚠️"}
-                                </div>
-                              )}
+                              <RemainingDosesInput
+                                medicationId={med.id}
+                                initialValue={med.remainingDoses}
+                              />
                               {med.notes && (
                                 <div className="text-xs text-gray-500 mt-0.5 italic overflow-hidden" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{med.notes}</div>
                               )}

@@ -129,7 +129,9 @@ export default async function StoolChartPage({
       </div>
 
       <div className="mb-3 bg-gray-50 rounded-lg p-3 text-xs text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
-        <span className="font-medium">タップで切替：— → <span className="text-green-700 font-bold">○</span>（良好）→ <span className="text-amber-700 font-bold">△</span>（軟便/少）→ <span className="text-red-700 font-bold">×</span>（下痢/なし）→ —</span>
+        <span className="font-medium">タップで切替：
+          （未記録）→ <span className="text-green-700 font-bold">○</span>（良好）→ <span className="text-amber-700 font-bold">△</span>（軟便/少）→ <span className="text-red-700 font-bold">×</span>（下痢）→ <span className="text-slate-500 font-bold">－</span>（出なかった）→ （未記録）
+        </span>
       </div>
 
       <ExcretionChartClient
