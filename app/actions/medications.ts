@@ -105,12 +105,11 @@ export async function toggleMedicationLog(formData: FormData) {
   const dateLabel = logDate.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
   const timeLabel = timeOfDay === "AM" ? "朝" : "夜";
 
+  const remainingDosesStr = formData.get("remainingDoses") as string | null;
+  const remainingDoses = remainingDosesStr !== null && remainingDosesStr !== "" ? parseInt(remainingDosesStr) : null;
+
   if (existing === "true") {
     await prisma.medicationLog.deleteMany({ where: { medicationId, logDate, timeOfDay } });
-    await prisma.medication.updateMany({
-      where: { id: medicationId, remainingDoses: { gt: 0 } },
-      data: { remainingDoses: { increment: 1 } },
-    });
     if (sId && med) {
       const staffUser = await prisma.user.findUnique({ where: { id: sId }, select: { name: true } });
       await createAuditLog(sId, staffUser?.name ?? "不明", "投薬ログ 取消", `${med.animal.name}「${med.medicineName}」${dateLabel}${timeLabel}`);
@@ -119,13 +118,16 @@ export async function toggleMedicationLog(formData: FormData) {
     await prisma.medicationLog.create({
       data: { medicationId, logDate, timeOfDay, staffId: sId ?? null },
     });
-    await prisma.medication.updateMany({
-      where: { id: medicationId, remainingDoses: { gt: 0 } },
-      data: { remainingDoses: { decrement: 1 } },
-    });
+    if (remainingDoses !== null && !isNaN(remainingDoses)) {
+      await prisma.medication.update({
+        where: { id: medicationId },
+        data: { remainingDoses },
+      });
+    }
     if (sId && med) {
       const staffUser = await prisma.user.findUnique({ where: { id: sId }, select: { name: true } });
-      await createAuditLog(sId, staffUser?.name ?? "不明", "投薬ログ 記録", `${med.animal.name}「${med.medicineName}」${dateLabel}${timeLabel}`);
+      const countNote = remainingDoses !== null && !isNaN(remainingDoses) ? ` 残量:${remainingDoses}` : "";
+      await createAuditLog(sId, staffUser?.name ?? "不明", "投薬ログ 記録", `${med.animal.name}「${med.medicineName}」${dateLabel}${timeLabel}${countNote}`);
     }
   }
   updateTag("medications");
