@@ -59,19 +59,6 @@ export default function ToggleLogButton({
     });
   }
 
-  function handleSkip() {
-    setEnteringCount(false);
-    setGiven(true);
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.append("medicationId", medicationId);
-      fd.append("logDate", logDate);
-      fd.append("timeOfDay", timeOfDay);
-      fd.append("existing", "false");
-      await toggleMedicationLog(fd);
-    });
-  }
-
   return (
     <>
       <button
@@ -96,7 +83,7 @@ export default function ToggleLogButton({
       {enteringCount && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-2xl">
           <div className="max-w-md mx-auto p-4">
-            <p className="text-sm font-semibold text-gray-700 mb-3">投与後の残量を入力してください（任意）</p>
+            <p className="text-sm font-semibold text-gray-700 mb-3">投与後の残量（空欄でも記録できます）</p>
             <div className="flex items-center gap-3 mb-4">
               <input
                 ref={inputRef}
@@ -119,12 +106,6 @@ export default function ToggleLogButton({
                 className="flex-1 bg-green-600 text-white rounded-xl py-3 font-semibold text-sm active:bg-green-700"
               >
                 ✓ 記録する
-              </button>
-              <button
-                onClick={handleSkip}
-                className="flex-1 bg-gray-100 text-gray-600 rounded-xl py-3 font-medium text-sm active:bg-gray-200"
-              >
-                残量スキップ
               </button>
               <button
                 onClick={() => setEnteringCount(false)}
