@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { createMedication, updateMedication } from "@/app/actions/medications";
 import SubmitButton from "@/components/SubmitButton";
 import { format } from "date-fns";
@@ -7,12 +8,19 @@ import { format } from "date-fns";
 const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
 const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
 
+const MEDICINE_TYPES = [
+  { value: "pill",     label: "💊 錠剤・粉薬・フード混入薬", hint: "投与のたびに残量を記録します" },
+  { value: "liquid",   label: "💧 目薬・点耳薬・シロップ",   hint: "残量カウントなしで記録します" },
+  { value: "ointment", label: "🧴 軟膏・塗り薬",             hint: "残量カウントなしで記録します" },
+];
+
 type Animal = { id: string; name: string; nameKana: string | null; species: string };
 
 type MedicationData = {
   id: string;
   animalId: string;
   medicineName: string;
+  medicationType: string;
   dosage: string | null;
   frequency: string | null;
   startDate: Date;
@@ -38,9 +46,13 @@ export default function MedicationForm({
   defaultAnimalId?: string;
   medication?: MedicationData;
 }) {
+  const [medType, setMedType] = useState(medication?.medicationType ?? "pill");
+
   const action = medication
     ? updateMedication.bind(null, medication.id)
     : createMedication;
+
+  const isPill = medType === "pill";
 
   const si = (s: string) => { const i = SPECIES_ORDER.indexOf(s); return i >= 0 ? i : 99; };
   const sorted = [...animals].sort((a, b) => {
@@ -49,6 +61,8 @@ export default function MedicationForm({
     return (a.nameKana || a.name).localeCompare(b.nameKana || b.name, "ja");
   });
   const speciesGroups = [...new Set(sorted.map((a) => a.species))].sort((a, b) => si(a) - si(b));
+
+  const currentTypeInfo = MEDICINE_TYPES.find((t) => t.value === medType);
 
   return (
     <form action={action} className="bg-white rounded-xl shadow-sm p-6 space-y-4 max-w-lg">
@@ -70,6 +84,24 @@ export default function MedicationForm({
             </optgroup>
           ))}
         </select>
+      </div>
+
+      {/* 剤型 */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">剤型 *</label>
+        <select
+          name="medicationType"
+          value={medType}
+          onChange={(e) => setMedType(e.target.value)}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          {MEDICINE_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
+        {currentTypeInfo && (
+          <p className="text-xs text-gray-400 mt-1">{currentTypeInfo.hint}</p>
+        )}
       </div>
 
       <div>
@@ -129,54 +161,56 @@ export default function MedicationForm({
         </div>
       </div>
 
-      {/* 残量（錠・回数） */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          残量（錠数・回数）
-          <span className="ml-2 text-xs font-normal text-gray-400">チェック表で投与のたびに自動カウントダウン</span>
-        </label>
-        <input
-          type="number"
-          name="remainingDoses"
-          min="0"
-          defaultValue={medication?.remainingDoses?.toString() ?? ""}
-          placeholder="例: 30"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      </div>
+      {/* 残量（錠剤のみ） */}
+      {isPill && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            初期残量（錠数）
+          </label>
+          <input
+            type="number"
+            name="remainingDoses"
+            min="0"
+            defaultValue={medication?.remainingDoses?.toString() ?? ""}
+            placeholder="例: 30"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">投与チェック時に都度残量を更新します</p>
+        </div>
+      )}
 
       {/* 目薬・液体薬：開封日管理 */}
-      <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/50 space-y-3">
-        <p className="text-xs font-medium text-blue-700">👁 目薬・液体薬の開封日管理（任意）</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">開封日</label>
-            <input
-              type="date"
-              name="openedAt"
-              defaultValue={fmtDate(medication?.openedAt)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              開封後使用期限
-            </label>
-            <div className="flex items-center gap-2">
+      {!isPill && (
+        <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/50 space-y-3">
+          <p className="text-xs font-medium text-blue-700">👁 開封日・使用期限の管理（任意）</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">開封日</label>
               <input
-                type="number"
-                name="expiresAfterDays"
-                min="1"
-                defaultValue={medication?.expiresAfterDays?.toString() ?? ""}
-                placeholder="例: 28"
+                type="date"
+                name="openedAt"
+                defaultValue={fmtDate(medication?.openedAt)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
               />
-              <span className="text-sm text-gray-500 whitespace-nowrap">日間</span>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">開封後使用期限</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  name="expiresAfterDays"
+                  min="1"
+                  defaultValue={medication?.expiresAfterDays?.toString() ?? ""}
+                  placeholder="例: 28"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                />
+                <span className="text-sm text-gray-500 whitespace-nowrap">日間</span>
+              </div>
             </div>
           </div>
+          <p className="text-xs text-gray-400">開封日と使用期限日数を入力すると、残り日数が表示されます</p>
         </div>
-        <p className="text-xs text-gray-400">開封日と使用期限日数を入力すると、投薬記録一覧に残り日数が表示されます</p>
-      </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">備考</label>

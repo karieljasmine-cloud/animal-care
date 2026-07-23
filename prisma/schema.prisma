@@ -84,6 +84,7 @@ model Medication {
   staffId         String
   staff           User             @relation(fields: [staffId], references: [id])
   medicineName    String
+  medicationType  String           @default("pill")
   dosage          String?
   frequency       String?
   startDate       DateTime

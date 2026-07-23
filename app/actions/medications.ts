@@ -22,6 +22,7 @@ export async function createMedication(formData: FormData) {
       animalId: formData.get("animalId") as string,
       staffId: session.user.id!,
       medicineName: formData.get("medicineName") as string,
+      medicationType: (formData.get("medicationType") as string) || "pill",
       dosage: (formData.get("dosage") as string) || null,
       frequency: (formData.get("frequency") as string) || null,
       startDate: new Date(formData.get("startDate") as string),
@@ -53,6 +54,7 @@ export async function updateMedication(id: string, formData: FormData) {
     where: { id },
     data: {
       medicineName: formData.get("medicineName") as string,
+      medicationType: (formData.get("medicationType") as string) || "pill",
       dosage: (formData.get("dosage") as string) || null,
       frequency: (formData.get("frequency") as string) || null,
       startDate: new Date(formData.get("startDate") as string),

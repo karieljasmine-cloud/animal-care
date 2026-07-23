@@ -23,7 +23,7 @@ function getMedicationChartData(fromDateStr: string) {
         },
         orderBy: [{ animal: { name: "asc" } }, { medicineName: "asc" }],
         select: {
-          id: true, medicineName: true, dosage: true, frequency: true,
+          id: true, medicineName: true, medicationType: true, dosage: true, frequency: true,
           startDate: true, endDate: true,
           remainingDoses: true, openedAt: true, expiresAfterDays: true, notes: true,
           animal: { select: { id: true, name: true, nameKana: true, species: true } },
@@ -259,6 +259,7 @@ export default async function MedicationChartPage({
                                         staffName={logInfo?.staffName ?? null}
                                         logRemainingDoses={logInfo?.logRemainingDoses ?? null}
                                         remainingDoses={med.remainingDoses}
+                                        medicationType={med.medicationType}
                                       />
                                     )}
                                   </td>

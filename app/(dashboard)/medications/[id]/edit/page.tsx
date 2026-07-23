@@ -9,7 +9,8 @@ export default async function EditMedicationPage(props: { params: Promise<{ id: 
     prisma.medication.findUnique({
       where: { id },
       select: {
-        id: true, animalId: true, medicineName: true, dosage: true, frequency: true,
+        id: true, animalId: true, medicineName: true, medicationType: true,
+        dosage: true, frequency: true,
         startDate: true, endDate: true, administeredAt: true, remainingDoses: true,
         openedAt: true, expiresAfterDays: true, notes: true,
       },
