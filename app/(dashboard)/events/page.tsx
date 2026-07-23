@@ -37,6 +37,7 @@ type DisplayEvent = {
   notes: string | null;
   animal: { id: string; name: string };
   isFromDailyRecord: boolean;
+  dailyRecordId?: string;
 };
 
 function getCalendarData(monthStr: string, animalId: string, type: string, species: string) {
@@ -166,6 +167,7 @@ export default async function EventsCalendarPage({
         notes: null,
         animal: dr.animal,
         isFromDailyRecord: true,
+        dailyRecordId: dr.id,
       });
     }
     if (dr.injury) {
@@ -177,6 +179,7 @@ export default async function EventsCalendarPage({
         notes: null,
         animal: dr.animal,
         isFromDailyRecord: true,
+        dailyRecordId: dr.id,
       });
     }
     if (dr.inHeat) {
@@ -188,6 +191,7 @@ export default async function EventsCalendarPage({
         notes: null,
         animal: dr.animal,
         isFromDailyRecord: true,
+        dailyRecordId: dr.id,
       });
     }
 
@@ -204,6 +208,7 @@ export default async function EventsCalendarPage({
         notes: dr.notes,
         animal: dr.animal,
         isFromDailyRecord: true,
+        dailyRecordId: dr.id,
       });
     }
   }
@@ -399,7 +404,26 @@ export default async function EventsCalendarPage({
                     )}
                   </div>
                 </div>
-                {!ev.isFromDailyRecord && <DeleteEventButton id={ev.id} />}
+                {ev.isFromDailyRecord ? (
+                  ev.dailyRecordId && (
+                    <Link
+                      href={`/daily-records/${ev.dailyRecordId}/edit`}
+                      className="text-xs text-gray-400 hover:text-green-600 whitespace-nowrap shrink-0 px-2 py-1 rounded hover:bg-green-50 transition-colors"
+                    >
+                      日次記録を編集
+                    </Link>
+                  )
+                ) : (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Link
+                      href={`/events/${ev.id}/edit`}
+                      className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                    >
+                      編集
+                    </Link>
+                    <DeleteEventButton id={ev.id} />
+                  </div>
+                )}
               </div>
             );
           })}

@@ -40,6 +40,43 @@ export async function createAnimalEvent(formData: FormData) {
   redirect("/events");
 }
 
+export async function updateAnimalEvent(id: string, formData: FormData) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const eventDate = formData.get("eventDate") as string;
+  const eventType = formData.get("eventType") as string;
+  const title = (formData.get("title") as string)?.trim();
+  const notes = (formData.get("notes") as string)?.trim();
+
+  if (!eventDate || !eventType || !title) {
+    throw new Error("必須項目が不足しています");
+  }
+
+  const ev = await prisma.animalEvent.findUnique({
+    where: { id },
+    include: { animal: { select: { name: true } } },
+  });
+  if (!ev) throw new Error("Record not found");
+
+  await prisma.animalEvent.update({
+    where: { id },
+    data: {
+      eventDate: new Date(eventDate),
+      eventType,
+      title,
+      notes: notes || null,
+    },
+  });
+
+  const user = session.user as { id: string; name?: string };
+  await createAuditLog(user.id, user.name ?? "不明", "特記事項 編集", `${ev.animal.name}「${title}」(${eventDate})`);
+
+  updateTag("animal-events");
+  revalidatePath("/events");
+  redirect("/events");
+}
+
 export async function deleteAnimalEvent(id: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
