@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { format, differenceInDays, addDays } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -20,10 +19,8 @@ const getMedications = unstable_cache(
 );
 
 export default async function MedicationsPage() {
-  const session = await auth();
-  const role = (session?.user as { role?: string })?.role ?? "staff";
-  const canEdit = role === "admin";
-  const canAdd = role === "admin" || role === "staff";
+  const canEdit = true;
+  const canAdd = true;
 
   const medications = await getMedications();
 

@@ -116,7 +116,7 @@ export async function toggleMedicationLog(formData: FormData) {
     }
   } else {
     await prisma.medicationLog.create({
-      data: { medicationId, logDate, timeOfDay, staffId: sId ?? null },
+      data: { medicationId, logDate, timeOfDay, staffId: sId ?? null, remainingDoses: remainingDoses ?? null },
     });
     if (remainingDoses !== null && !isNaN(remainingDoses)) {
       await prisma.medication.update({

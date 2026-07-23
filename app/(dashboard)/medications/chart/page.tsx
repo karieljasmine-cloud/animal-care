@@ -5,7 +5,6 @@ import { format, subDays, startOfDay, addDays, differenceInDays } from "date-fns
 import { ja } from "date-fns/locale";
 import { unstable_cache } from "next/cache";
 import ToggleLogButton from "@/components/ToggleLogButton";
-import RemainingDosesEditor from "@/components/RemainingDosesEditor";
 
 const SPECIES_ORDER = ["犬", "猫", "うさぎ", "その他"];
 const SPECIES_ICON: Record<string, string> = { 犬: "🐕", 猫: "🐈", うさぎ: "🐇", その他: "🐾" };
@@ -30,7 +29,10 @@ function getMedicationChartData(fromDateStr: string) {
           animal: { select: { id: true, name: true, nameKana: true, species: true } },
           logs: {
             where: { logDate: { gte: from } },
-            select: { id: true, logDate: true, timeOfDay: true, staff: { select: { name: true } } },
+            select: {
+              id: true, logDate: true, timeOfDay: true, remainingDoses: true,
+              staff: { select: { name: true } },
+            },
           },
         },
       });
@@ -51,11 +53,8 @@ export default async function MedicationChartPage({
 }: {
   searchParams: Promise<{ week?: string }>;
 }) {
-  const [sp, session] = await Promise.all([searchParams, auth()]);
+  const sp = await searchParams;
   const weekOffset = Math.max(0, parseInt(sp.week ?? "0") || 0);
-  const role = (session?.user as { role?: string })?.role ?? "staff";
-  const isAdmin = role === "admin";
-  const canAdd = role === "admin" || role === "staff";
 
   const today = startOfDay(new Date());
   const anchor = subDays(today, weekOffset * 7);
@@ -73,12 +72,15 @@ export default async function MedicationChartPage({
     return a.medicineName.localeCompare(b.medicineName, "ja");
   });
 
-  type LogInfo = { staffName: string | null };
+  type LogInfo = { staffName: string | null; logRemainingDoses: number | null };
   const logMap = new Map<string, LogInfo>();
   for (const med of medications) {
     for (const log of med.logs) {
       const key = `${med.id}_${format(new Date(log.logDate), "yyyy-MM-dd")}_${log.timeOfDay}`;
-      logMap.set(key, { staffName: log.staff?.name ?? null });
+      logMap.set(key, {
+        staffName: log.staff?.name ?? null,
+        logRemainingDoses: log.remainingDoses ?? null,
+      });
     }
   }
 
@@ -94,11 +96,9 @@ export default async function MedicationChartPage({
           <Link href="/medications" className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200">
             📋 投薬一覧
           </Link>
-          {canAdd && (
-            <Link href="/medications/new" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
-              ＋ 投薬を追加
-            </Link>
-          )}
+          <Link href="/medications/new" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
+            ＋ 投薬を追加
+          </Link>
         </div>
       </div>
 
@@ -126,18 +126,18 @@ export default async function MedicationChartPage({
         )}
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-4 text-sm">
-        <span className="flex items-center gap-1">
-          <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">✓</span>
-          投与済み（スタッフ名表示）
+      <div className="mb-3 flex flex-wrap gap-4 text-sm text-gray-500">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-5 h-5 rounded-sm bg-green-500"></span>
+          投与済み（スタッフ名・残量を表示）
         </span>
-        <span className="flex items-center gap-1">
-          <span className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center text-xs"></span>
-          未投与（クリックで記録）
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-5 h-5 rounded-full border-2 border-gray-300"></span>
+          未投与（タップで記録）
         </span>
         <span className="flex items-center gap-1">
           <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded font-bold">残少</span>
-          残量3回以下で赤表示
+          残量3以下で赤表示
         </span>
       </div>
 
@@ -221,10 +221,11 @@ export default async function MedicationChartPage({
                                   {format(new Date(med.startDate), "M/d", { locale: ja })} 〜 {format(new Date(med.endDate), "M/d", { locale: ja })}
                                 </div>
                               )}
-                              <RemainingDosesEditor
-                                medicationId={med.id}
-                                initialCount={med.remainingDoses}
-                              />
+                              {med.remainingDoses !== null && (
+                                <div className={`text-xs mt-0.5 font-semibold ${isLow ? "text-red-500" : "text-gray-500"}`}>
+                                  残量: {med.remainingDoses}錠・包{isLow ? " ⚠️" : ""}
+                                </div>
+                              )}
                               {med.notes && (
                                 <div className="text-xs text-gray-500 mt-0.5 italic overflow-hidden" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{med.notes}</div>
                               )}
@@ -256,6 +257,7 @@ export default async function MedicationChartPage({
                                         timeOfDay={t}
                                         initialGiven={given}
                                         staffName={logInfo?.staffName ?? null}
+                                        logRemainingDoses={logInfo?.logRemainingDoses ?? null}
                                         remainingDoses={med.remainingDoses}
                                       />
                                     )}
@@ -276,7 +278,7 @@ export default async function MedicationChartPage({
       )}
 
       <p className="mt-3 text-xs text-gray-400">
-        ※ ☀朝=AM　★夜=PM　ボタンをクリックで投与済み/未投与を切り替えできます。ホバーで投与スタッフ名を確認できます。
+        ※ ☀朝=AM　★夜=PM　未投与のセルをタップして記録。投与済みのセルをタップすると取り消し確認が表示されます。
       </p>
     </div>
   );
