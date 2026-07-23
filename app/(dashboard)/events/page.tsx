@@ -24,6 +24,7 @@ const EVENT_TYPE_CONFIG = {
   care: { label: "ケア", color: "bg-blue-100 text-blue-800", dotColor: "bg-blue-500", icon: "✂️" },
   injury: { label: "怪我・異常", color: "bg-red-100 text-red-800", dotColor: "bg-red-500", icon: "🩹" },
   inHeat: { label: "ヒート", color: "bg-pink-100 text-pink-800", dotColor: "bg-pink-500", icon: "🌸" },
+  health: { label: "健康状態", color: "bg-teal-100 text-teal-800", dotColor: "bg-teal-500", icon: "🏥" },
 } as const;
 
 type EventType = keyof typeof EVENT_TYPE_CONFIG;
@@ -48,7 +49,8 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
       const fetchDrCare = !type || type === "care";
       const fetchDrInjury = !type || type === "injury";
       const fetchDrInHeat = !type || type === "inHeat";
-      const fetchDailyRecords = fetchDrCare || fetchDrInjury || fetchDrInHeat;
+      const fetchDrHealth = !type || type === "health";
+      const fetchDailyRecords = fetchDrCare || fetchDrInjury || fetchDrInHeat || fetchDrHealth;
 
       const drOrConditions = [
         ...(fetchDrCare ? [
@@ -60,6 +62,12 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
         ] : []),
         ...(fetchDrInjury ? [{ injury: { not: null } }] : []),
         ...(fetchDrInHeat ? [{ inHeat: true as const }] : []),
+        ...(fetchDrHealth ? [
+          { energyLevel: { not: null } },
+          { appetite: { not: null } },
+          { foodAmount: { not: null } },
+          { notes: { not: null } },
+        ] : []),
       ];
 
       const [events, animals, dailyRecords] = await Promise.all([
@@ -96,6 +104,10 @@ function getCalendarData(monthStr: string, animalId: string, type: string, speci
                 earCleaning: true,
                 inHeat: true,
                 injury: true,
+                energyLevel: true,
+                appetite: true,
+                foodAmount: true,
+                notes: true,
                 animalId: true,
                 animal: { select: { id: true, name: true } },
               },
@@ -178,6 +190,22 @@ export default async function EventsCalendarPage({
         isFromDailyRecord: true,
       });
     }
+
+    const healthParts: string[] = [];
+    if (dr.energyLevel) healthParts.push(`元気${"★".repeat(dr.energyLevel)}`);
+    if (dr.appetite) healthParts.push(`食欲:${dr.appetite}`);
+    if (dr.foodAmount) healthParts.push(dr.foodAmount);
+    if (healthParts.length > 0 || dr.notes) {
+      drEvents.push({
+        id: `dr-health-${dr.id}`,
+        eventDate: dr.recordDate,
+        eventType: "health",
+        title: healthParts.join(" / ") || "健康記録",
+        notes: dr.notes,
+        animal: dr.animal,
+        isFromDailyRecord: true,
+      });
+    }
   }
 
   // 全イベントをマージ（日付順）
@@ -220,6 +248,7 @@ export default async function EventsCalendarPage({
 
   const filterTabs = [
     { value: "", label: "全種別", href: buildUrl(monthStr, "", animalIdFilter, speciesFilter) },
+    { value: "health", label: "🏥 健康状態", href: buildUrl(monthStr, "health", animalIdFilter, speciesFilter) },
     { value: "adHocMed", label: "💊 突発的なお薬", href: buildUrl(monthStr, "adHocMed", animalIdFilter, speciesFilter) },
     { value: "care", label: "✂️ ケア", href: buildUrl(monthStr, "care", animalIdFilter, speciesFilter) },
     { value: "injury", label: "🩹 怪我・異常", href: buildUrl(monthStr, "injury", animalIdFilter, speciesFilter) },

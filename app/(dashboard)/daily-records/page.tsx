@@ -81,7 +81,7 @@ export default async function DailyRecordsPage({
           href="/daily-records/chart"
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
         >
-          📊 便チェック表
+          🚽 便チェック表
         </Link>
       </div>
 
@@ -176,8 +176,6 @@ export default async function DailyRecordsPage({
                 )}
                 {record.appetite && <Badge label="食欲" value={record.appetite} />}
                 {record.foodAmount && <Badge label="食事量" value={record.foodAmount} />}
-                {record.urineAmount && <Badge label="尿" value={record.urineAmount} />}
-                {record.stoolCondition && <Badge label="便" value={record.stoolCondition} />}
                 {record.brushing && <Tag>ブラッシング</Tag>}
                 {record.nailTrimming && <Tag>爪切り</Tag>}
                 {record.trimming && <Tag>トリミング</Tag>}
@@ -194,20 +192,12 @@ export default async function DailyRecordsPage({
               {record.notes && (
                 <p className="mt-1 text-sm text-gray-500">{record.notes}</p>
               )}
-              {(record.stoolPhotoUrl || record.injuryPhotoUrl) && (
+              {record.injuryPhotoUrl && (
                 <div className="mt-2 flex gap-2">
-                  {record.stoolPhotoUrl && (
-                    <a href={record.stoolPhotoUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline">
-                      📷 便の写真
-                    </a>
-                  )}
-                  {record.injuryPhotoUrl && (
-                    <a href={record.injuryPhotoUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline">
-                      📷 怪我の写真
-                    </a>
-                  )}
+                  <a href={record.injuryPhotoUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline">
+                    📷 怪我の写真
+                  </a>
                 </div>
               )}
             </div>

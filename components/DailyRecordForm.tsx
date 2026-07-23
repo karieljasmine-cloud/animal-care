@@ -15,9 +15,6 @@ type RecordData = {
   energyLevel: number | null;
   appetite: string | null;
   foodAmount: string | null;
-  urineAmount: string | null;
-  stoolCondition: string | null;
-  stoolPhotoUrl: string | null;
   brushing: boolean;
   nailTrimming: boolean;
   trimming: boolean;
@@ -42,7 +39,6 @@ export default function DailyRecordForm({
   defaultTimeOfDay?: string;
   record?: RecordData;
 }) {
-  const [stoolPreview, setStoolPreview] = useState<string | null>(record?.stoolPhotoUrl ?? null);
   const [injuryPreview, setInjuryPreview] = useState<string | null>(record?.injuryPhotoUrl ?? null);
 
   const action = record ? updateDailyRecord.bind(null, record.id) : createDailyRecord;
@@ -141,57 +137,6 @@ export default function DailyRecordForm({
         </div>
       </Section>
 
-      {/* 排泄 */}
-      <Section title="排泄">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">尿の量</label>
-            <select
-              name="urineAmount"
-              defaultValue={record?.urineAmount ?? ""}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">選択</option>
-              <option value="多い">多い</option>
-              <option value="普通">普通</option>
-              <option value="少ない">少ない</option>
-              <option value="なし">なし</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">便の状態</label>
-            <select
-              name="stoolCondition"
-              defaultValue={record?.stoolCondition ?? ""}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">選択</option>
-              <option value="良好">良好</option>
-              <option value="軟便">軟便</option>
-              <option value="下痢">下痢</option>
-              <option value="血便">血便</option>
-              <option value="なし">なし</option>
-            </select>
-          </div>
-        </div>
-        <div className="mt-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">便の写真</label>
-          <input
-            type="file"
-            name="stoolPhoto"
-            accept="image/*"
-            className="w-full text-sm text-gray-500"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setStoolPreview(URL.createObjectURL(file));
-            }}
-          />
-          {stoolPreview && (
-            <img src={stoolPreview} alt="便の写真" className="mt-1 h-16 rounded object-cover" />
-          )}
-        </div>
-      </Section>
-
       {/* ケア */}
       <Section title="ケア">
         <div className="flex flex-wrap gap-5">
@@ -201,7 +146,6 @@ export default function DailyRecordForm({
             { name: "trimming", label: "トリミング", checked: record?.trimming },
             { name: "shampoo", label: "シャンプー", checked: record?.shampoo },
             { name: "earCleaning", label: "耳掃除", checked: record?.earCleaning },
-            { name: "inHeat", label: "ヒート", checked: record?.inHeat },
           ].map((item) => (
             <label key={item.name} className="flex items-center gap-2 cursor-pointer">
               <input
@@ -214,6 +158,19 @@ export default function DailyRecordForm({
             </label>
           ))}
         </div>
+      </Section>
+
+      {/* ヒート */}
+      <Section title="ヒート">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            name="inHeat"
+            defaultChecked={record?.inHeat ?? false}
+            className="w-5 h-5 rounded border-gray-300 text-pink-500 focus:ring-pink-400"
+          />
+          <span className="text-sm text-gray-700">🌸 ヒート中</span>
+        </label>
       </Section>
 
       {/* 怪我 */}

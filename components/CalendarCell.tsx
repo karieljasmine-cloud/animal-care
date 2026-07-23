@@ -7,6 +7,7 @@ const EVENT_TYPE_CONFIG = {
   care: { color: "bg-blue-100 text-blue-800", icon: "✂️", label: "ケア" },
   injury: { color: "bg-red-100 text-red-800", icon: "🩹", label: "怪我・異常" },
   inHeat: { color: "bg-pink-100 text-pink-800", icon: "🌸", label: "ヒート" },
+  health: { color: "bg-teal-100 text-teal-800", icon: "🏥", label: "健康状態" },
 } as const;
 
 type EventType = keyof typeof EVENT_TYPE_CONFIG;

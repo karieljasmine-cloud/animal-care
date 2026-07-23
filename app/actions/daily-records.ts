@@ -34,10 +34,7 @@ export async function createDailyRecord(formData: FormData) {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
 
-  const stoolFile = formData.get("stoolPhoto") as File;
   const injuryFile = formData.get("injuryPhoto") as File;
-
-  const stoolPhotoUrl = await savePhoto(stoolFile, "stool");
   const injuryPhotoUrl = await savePhoto(injuryFile, "injury");
 
   const animalId = formData.get("animalId") as string;
@@ -51,9 +48,6 @@ export async function createDailyRecord(formData: FormData) {
       energyLevel: formData.get("energyLevel") ? parseInt(formData.get("energyLevel") as string) : null,
       appetite: (formData.get("appetite") as string) || null,
       foodAmount: (formData.get("foodAmount") as string) || null,
-      urineAmount: (formData.get("urineAmount") as string) || null,
-      stoolCondition: (formData.get("stoolCondition") as string) || null,
-      stoolPhotoUrl,
       brushing: formData.get("brushing") === "on",
       nailTrimming: formData.get("nailTrimming") === "on",
       trimming: formData.get("trimming") === "on",
@@ -79,10 +73,7 @@ export async function updateDailyRecord(id: string, formData: FormData) {
   const existing = await prisma.dailyRecord.findUnique({ where: { id } });
   if (!existing) throw new Error("Record not found");
 
-  const stoolFile = formData.get("stoolPhoto") as File;
   const injuryFile = formData.get("injuryPhoto") as File;
-
-  const stoolPhotoUrl = (await savePhoto(stoolFile, "stool")) ?? existing.stoolPhotoUrl;
   const injuryPhotoUrl = (await savePhoto(injuryFile, "injury")) ?? existing.injuryPhotoUrl;
 
   await prisma.dailyRecord.update({
@@ -93,9 +84,6 @@ export async function updateDailyRecord(id: string, formData: FormData) {
       energyLevel: formData.get("energyLevel") ? parseInt(formData.get("energyLevel") as string) : null,
       appetite: (formData.get("appetite") as string) || null,
       foodAmount: (formData.get("foodAmount") as string) || null,
-      urineAmount: (formData.get("urineAmount") as string) || null,
-      stoolCondition: (formData.get("stoolCondition") as string) || null,
-      stoolPhotoUrl,
       brushing: formData.get("brushing") === "on",
       nailTrimming: formData.get("nailTrimming") === "on",
       trimming: formData.get("trimming") === "on",
