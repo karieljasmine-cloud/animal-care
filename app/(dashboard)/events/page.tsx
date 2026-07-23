@@ -16,6 +16,7 @@ import { ja } from "date-fns/locale";
 import { unstable_cache } from "next/cache";
 import AnimalSelectorClient from "@/components/AnimalSelectorClient";
 import DeleteEventButton from "@/components/DeleteEventButton";
+import DeleteDrEventButton from "@/components/DeleteDrEventButton";
 import CalendarCell from "@/components/CalendarCell";
 import FilterTabs from "@/components/FilterTabs";
 
@@ -406,12 +407,18 @@ export default async function EventsCalendarPage({
                 </div>
                 {ev.isFromDailyRecord ? (
                   ev.dailyRecordId && (
-                    <Link
-                      href={`/daily-records/${ev.dailyRecordId}/edit`}
-                      className="text-xs text-gray-400 hover:text-green-600 whitespace-nowrap shrink-0 px-2 py-1 rounded hover:bg-green-50 transition-colors"
-                    >
-                      日次記録を編集
-                    </Link>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Link
+                        href={`/daily-records/${ev.dailyRecordId}/edit`}
+                        className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                      >
+                        編集
+                      </Link>
+                      <DeleteDrEventButton
+                        dailyRecordId={ev.dailyRecordId}
+                        eventType={ev.eventType as "care" | "injury" | "inHeat" | "health"}
+                      />
+                    </div>
                   )
                 ) : (
                   <div className="flex items-center gap-1 shrink-0">

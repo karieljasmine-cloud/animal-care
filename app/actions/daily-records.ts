@@ -101,6 +101,30 @@ export async function updateDailyRecord(id: string, formData: FormData) {
   redirect(`/daily-records?animalId=${existing.animalId}`);
 }
 
+export async function clearDailyRecordEvent(
+  dailyRecordId: string,
+  eventType: "care" | "injury" | "inHeat" | "health"
+): Promise<void> {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const dataMap = {
+    care: { brushing: false, nailTrimming: false, trimming: false, shampoo: false, earCleaning: false },
+    injury: { injury: null, injuryPhotoUrl: null },
+    inHeat: { inHeat: false },
+    health: { energyLevel: null, appetite: null, foodAmount: null, notes: null },
+  };
+
+  await prisma.dailyRecord.update({
+    where: { id: dailyRecordId },
+    data: dataMap[eventType],
+  });
+
+  updateTag("daily-records");
+  revalidatePath("/events");
+  revalidatePath("/daily-records");
+}
+
 export async function quickUpdateExcretion(
   animalId: string,
   dateStr: string,
