@@ -9,12 +9,14 @@ export default function ToggleLogButton({
   timeOfDay,
   initialGiven,
   staffName,
+  remainingDoses,
 }: {
   medicationId: string;
   logDate: string;
   timeOfDay: string;
   initialGiven: boolean;
   staffName: string | null;
+  remainingDoses?: number | null;
 }) {
   const [given, setGiven] = useState(initialGiven);
   const [enteringCount, setEnteringCount] = useState(false);
@@ -83,7 +85,10 @@ export default function ToggleLogButton({
       {enteringCount && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-2xl">
           <div className="max-w-md mx-auto p-4">
-            <p className="text-sm font-semibold text-gray-700 mb-3">投与後の残量（空欄でも記録できます）</p>
+            <p className="text-sm font-semibold text-gray-700 mb-1">投与後の残量（空欄でも記録できます）</p>
+            {remainingDoses !== null && remainingDoses !== undefined && (
+              <p className="text-xs text-gray-400 mb-2">前回記録: {remainingDoses}錠・包</p>
+            )}
             <div className="flex items-center gap-3 mb-4">
               <input
                 ref={inputRef}

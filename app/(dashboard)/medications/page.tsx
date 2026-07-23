@@ -23,6 +23,7 @@ export default async function MedicationsPage() {
   const session = await auth();
   const role = (session?.user as { role?: string })?.role ?? "staff";
   const canEdit = role === "admin";
+  const canAdd = role === "admin" || role === "staff";
 
   const medications = await getMedications();
 
@@ -41,7 +42,7 @@ export default async function MedicationsPage() {
           >
             📋 投薬チェック表
           </Link>
-          {canEdit && (
+          {canAdd && (
             <Link
               href="/medications/new"
               className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"

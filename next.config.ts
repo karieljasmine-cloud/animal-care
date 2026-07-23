@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+process.env.TZ = "Asia/Tokyo";
+
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
