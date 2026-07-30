@@ -109,12 +109,14 @@ export default async function AnimalDetailPage(props: { params: Promise<{ id: st
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-semibold text-gray-700">体重記録</h2>
-          <Link
-            href={`/animals/${id}/weight/new`}
-            className="text-sm text-green-600 hover:underline"
-          >
-            ＋ 体重を記録
-          </Link>
+          {canEdit && (
+            <Link
+              href={`/animals/${id}/weight/new`}
+              className="text-sm text-green-600 hover:underline"
+            >
+              ＋ 体重を記録
+            </Link>
+          )}
         </div>
         {animal.weightRecords.length === 0 ? (
           <p className="text-gray-400 text-sm">記録がありません</p>
@@ -137,12 +139,14 @@ export default async function AnimalDetailPage(props: { params: Promise<{ id: st
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-semibold text-gray-700">接種ワクチン</h2>
-          <Link
-            href={`/animals/${id}/vaccine/new`}
-            className="text-sm text-green-600 hover:underline"
-          >
-            ＋ ワクチンを追加
-          </Link>
+          {canEdit && (
+            <Link
+              href={`/animals/${id}/vaccine/new`}
+              className="text-sm text-green-600 hover:underline"
+            >
+              ＋ ワクチンを追加
+            </Link>
+          )}
         </div>
         {animal.vaccines.length === 0 ? (
           <p className="text-gray-400 text-sm">記録がありません</p>

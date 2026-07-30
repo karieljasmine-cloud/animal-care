@@ -71,6 +71,7 @@ export async function updateAnimal(id: string, formData: FormData) {
     },
   });
 
+  updateTag("animals");
   revalidatePath("/animals");
   revalidatePath(`/animals/${id}`);
   redirect(`/animals/${id}`);

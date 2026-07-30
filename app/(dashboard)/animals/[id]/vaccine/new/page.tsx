@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import SubmitButton from "@/components/SubmitButton";
 
 export default async function NewVaccinePage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
+  const session = await auth();
+  const role = (session?.user as { role?: string })?.role ?? "staff";
+  if (role !== "admin") redirect(`/animals/${id}`);
+
   const animal = await prisma.animal.findUnique({ where: { id } });
   if (!animal) notFound();
 
