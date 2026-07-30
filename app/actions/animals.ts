@@ -36,6 +36,7 @@ export async function createAnimal(formData: FormData) {
     },
   });
 
+  updateTag("animals");
   revalidatePath("/animals");
   redirect(`/animals/${animal.id}`);
 }

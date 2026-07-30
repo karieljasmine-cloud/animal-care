@@ -24,7 +24,7 @@ export default function Navbar({ userName, userRole }: { userName: string; userR
     { href: "/daily-records/chart", label: "便チェック表", icon: "🚽" },
     { href: "/medications/chart", label: "投薬記録", icon: "💊" },
     { href: "/events", label: "特記事項", icon: "📅" },
-    ...(canSeeAnimals ? [{ href: "/cat-toilet", label: "猫トイレ", icon: "🐈" }] : []),
+    { href: "/cat-toilet", label: "猫トイレ", icon: "🐈" },
     ...(isAdmin ? [{ href: "/staff", label: "スタッフ管理", icon: "👥" }] : []),
     ...(isAdmin ? [{ href: "/admin/audit-log", label: "操作履歴", icon: "📜" }] : []),
   ];
