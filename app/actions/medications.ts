@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { updateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAuditLog } from "@/lib/audit";
 
@@ -35,7 +35,7 @@ export async function createMedication(formData: FormData) {
     },
   });
 
-  updateTag("medications");
+  revalidateTag("medications", {});
   revalidatePath("/medications");
   redirect("/medications");
 }
@@ -67,7 +67,7 @@ export async function updateMedication(id: string, formData: FormData) {
     },
   });
 
-  updateTag("medications");
+  revalidateTag("medications", {});
   revalidatePath("/medications");
   redirect("/medications");
 }
@@ -88,7 +88,7 @@ export async function deleteMedication(id: string) {
     await createAuditLog(user.id, user.name ?? "不明", "投薬記録 削除", `${med.animal.name}「${med.medicineName}」`);
   }
 
-  updateTag("medications");
+  revalidateTag("medications", {});
   revalidatePath("/medications");
 }
 
@@ -132,7 +132,7 @@ export async function toggleMedicationLog(formData: FormData) {
       await createAuditLog(sId, staffUser?.name ?? "不明", "投薬ログ 記録", `${med.animal.name}「${med.medicineName}」${dateLabel}${timeLabel}${countNote}`);
     }
   }
-  updateTag("medications");
+  revalidateTag("medications", {});
   revalidatePath("/medications/chart");
 }
 
@@ -147,5 +147,5 @@ export async function updateRemainingDosesDirectly(medicationId: string, count: 
 
   const user = session.user as { id: string; name?: string };
   await createAuditLog(user.id, user.name ?? "不明", "投薬 残量更新", `ID: ${medicationId} → ${count ?? "なし"}回`);
-  updateTag("medications");
+  revalidateTag("medications", {});
 }

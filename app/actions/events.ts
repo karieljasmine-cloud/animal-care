@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAuditLog } from "@/lib/audit";
 
@@ -35,7 +35,7 @@ export async function createAnimalEvent(formData: FormData) {
   const user = session.user as { id: string; name?: string };
   await createAuditLog(user.id, user.name ?? "不明", "特記事項 追加", `${animal?.name ?? animalId}「${title}」(${eventDate})`);
 
-  updateTag("animal-events");
+  revalidateTag("animal-events", {});
   revalidatePath("/events");
   redirect("/events");
 }
@@ -72,7 +72,7 @@ export async function updateAnimalEvent(id: string, formData: FormData) {
   const user = session.user as { id: string; name?: string };
   await createAuditLog(user.id, user.name ?? "不明", "特記事項 編集", `${ev.animal.name}「${title}」(${eventDate})`);
 
-  updateTag("animal-events");
+  revalidateTag("animal-events", {});
   revalidatePath("/events");
   redirect("/events");
 }
@@ -93,6 +93,6 @@ export async function deleteAnimalEvent(id: string) {
     await createAuditLog(user.id, user.name ?? "不明", "特記事項 削除", `${ev.animal.name}「${ev.title}」`);
   }
 
-  updateTag("animal-events");
+  revalidateTag("animal-events", {});
   revalidatePath("/events");
 }

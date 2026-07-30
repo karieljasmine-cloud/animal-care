@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 function parseDate(val: FormDataEntryValue | null) {
@@ -36,7 +36,7 @@ export async function createAnimal(formData: FormData) {
     },
   });
 
-  updateTag("animals");
+  revalidateTag("animals", {});
   revalidatePath("/animals");
   redirect(`/animals/${animal.id}`);
 }
@@ -71,7 +71,7 @@ export async function updateAnimal(id: string, formData: FormData) {
     },
   });
 
-  updateTag("animals");
+  revalidateTag("animals", {});
   revalidatePath("/animals");
   revalidatePath(`/animals/${id}`);
   redirect(`/animals/${id}`);
@@ -82,7 +82,7 @@ export async function deleteAnimal(id: string) {
   if (!session?.user) throw new Error("Unauthorized");
 
   await prisma.animal.delete({ where: { id } });
-  updateTag("animals");
+  revalidateTag("animals", {});
   revalidatePath("/animals");
   redirect("/animals");
 }
@@ -106,7 +106,7 @@ export async function deactivateAnimal(formData: FormData) {
     },
   });
 
-  updateTag("animals");
+  revalidateTag("animals", {});
   revalidatePath("/animals");
   revalidatePath(`/animals/${id}`);
 }
@@ -126,7 +126,7 @@ export async function reactivateAnimal(id: string) {
     },
   });
 
-  updateTag("animals");
+  revalidateTag("animals", {});
   revalidatePath("/animals");
   revalidatePath(`/animals/${id}`);
 }

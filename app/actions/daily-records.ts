@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -60,7 +60,7 @@ export async function createDailyRecord(formData: FormData) {
     },
   });
 
-  updateTag("daily-records");
+  revalidateTag("daily-records", {});
   revalidatePath("/daily-records");
   revalidatePath(`/animals/${animalId}`);
   redirect(`/daily-records?animalId=${animalId}`);
@@ -96,7 +96,7 @@ export async function updateDailyRecord(id: string, formData: FormData) {
     },
   });
 
-  updateTag("daily-records");
+  revalidateTag("daily-records", {});
   revalidatePath("/daily-records");
   redirect(`/daily-records?animalId=${existing.animalId}`);
 }
@@ -120,7 +120,7 @@ export async function clearDailyRecordEvent(
     data: dataMap[eventType],
   });
 
-  updateTag("daily-records");
+  revalidateTag("daily-records", {});
   revalidatePath("/events");
   revalidatePath("/daily-records");
 }
