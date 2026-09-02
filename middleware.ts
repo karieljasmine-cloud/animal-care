@@ -1,5 +1,11 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { authConfig } from "@/lib/auth.config";
+
+// middleware（Edge）では Prisma を含まない Edge 安全な設定のみを使う。
+// アクセス無効化・権限変更の厳密な判定は lib/auth.ts（Node）側の
+// jwt コールバックと (dashboard)/layout.tsx で行う。
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;

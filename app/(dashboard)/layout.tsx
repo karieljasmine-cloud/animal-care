@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
+import ForceSignOut from "@/components/ForceSignOut";
 
 export default async function DashboardLayout({
   children,
@@ -9,7 +9,13 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+
+  // middleware は JWT の有無しか見ないため、ここに到達したのに session が無い
+  // ＝アクセス無効化 or アカウント削除でセッションが失効したケース。
+  // redirect すると middleware と往復ループになるので、クライアントで確実にサインアウトさせる。
+  if (!session?.user) {
+    return <ForceSignOut reason="このアカウントのアクセスは無効化されています" />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
